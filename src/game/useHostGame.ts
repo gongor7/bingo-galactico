@@ -20,17 +20,19 @@ import {
   CATEGORIES,
   REVEAL_BREAK_MS,
   ROUND_MS,
+  SPIN_HOLD_MS,
   SPIN_MS,
   type Card,
   type Category,
   type HostEvent,
+  type MarkTarget,
   type PlayerEvent,
   type PlayerPub,
   type PublicQuestion,
   type RevealWinner,
   type SegmentId,
 } from "./types";
-import { POOLS, QUESTIONS, imageFor, poolEntry, questionsByCategory } from "./data";
+import { COMODIN_QUESTIONS, POOLS, QUESTIONS, imageFor, poolEntry, questionsByCategory } from "./data";
 import { canPlaceMark, completedLine, generateCard } from "./cards";
 import { nextRotation, pickSegment, SEGMENTS } from "./wheel";
 import { matchesAnswer } from "./normalize";
@@ -50,8 +52,14 @@ export interface GameOverState {
 
 interface PendingMark {
   pid: string;
-  category: Category;
+  target: MarkTarget;
   roundNo: number;
+}
+
+interface ActiveAnswer {
+  key: string;
+  display: string;
+  aliases: string[];
 }
 
 const CHAR_CATEGORIES: Category[] = CATEGORIES.filter((c) => c !== "planetas");
@@ -62,6 +70,7 @@ export function useHostGame(code: string, roomId: string | null) {
   const [presenceCount, setPresenceCount] = useState(0);
   const [roundNo, setRoundNo] = useState(0);
   const [spin, setSpin] = useState<SpinState | null>(null);
+  const [spinning, setSpinning] = useState(false);
   const [question, setQuestion] = useState<PublicQuestion | null>(null);
   const [reveal, setReveal] = useState<{ winner: RevealWinner | null; answerDisplay: string; answerKey: string; points: number } | null>(null);
   const [buzzes, setBuzzes] = useState<string[]>([]);
@@ -86,7 +95,7 @@ export function useHostGame(code: string, roomId: string | null) {
   const roundRef = useRef(0);
   const rotationRef = useRef(0);
   const currentQRef = useRef<PublicQuestion | null>(null);
-  const currentKeyRef = useRef<string | null>(null);
+  const currentAnswerRef = useRef<ActiveAnswer | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const goPhase = (p: HostPhase) => {
@@ -203,32 +212,79 @@ export function useHostGame(code: string, roomId: string | null) {
     };
 
     const askQuestion = (segment: SegmentId, round: number) => {
-      const unused = (list: typeof QUESTIONS) => list.filter((q) => !usedRef.current.has(q.id));
-      let pool =
-        segment === "silueta"
-          ? unused(QUESTIONS.filter((q) => CHAR_CATEGORIES.includes(q.category)))
-          : segment === "comodin"
-            ? unused(QUESTIONS)
+      const unused = <T extends { id: string }>(list: T[]) => list.filter((q) => !usedRef.current.has(q.id));
+
+      let pub: PublicQuestion;
+      let answer: ActiveAnswer;
+
+      if (segment === "comodin") {
+        const comodinPool = unused(COMODIN_QUESTIONS);
+        if (comodinPool.length > 0) {
+          const cq = comodinPool[Math.floor(Math.random() * comodinPool.length)];
+          usedRef.current.add(cq.id);
+          pub = {
+            roundNo: round,
+            segment: "comodin",
+            category: "jedi",
+            markTarget: "any",
+            mode: "comodin",
+            prompt: cq.prompt,
+            image: "",
+            points: 3,
+            endsAt: Date.now() + ROUND_MS,
+          };
+          answer = { key: cq.key, display: cq.answerDisplay, aliases: cq.aliases };
+        } else {
+          const fallbackPool = unused(QUESTIONS);
+          if (fallbackPool.length === 0) {
+            endGame();
+            return;
+          }
+          const q = fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+          usedRef.current.add(q.id);
+          const entry = poolEntry(q.key)!;
+          pub = {
+            roundNo: round,
+            segment: "comodin",
+            category: q.category,
+            markTarget: "any",
+            mode: "comodin",
+            prompt: q.prompt,
+            image: "",
+            points: 3,
+            endsAt: Date.now() + ROUND_MS,
+          };
+          answer = { key: q.key, display: entry.display, aliases: entry.aliases };
+        }
+      } else {
+        let pool =
+          segment === "silueta"
+            ? unused(QUESTIONS.filter((q) => CHAR_CATEGORIES.includes(q.category)))
             : unused(questionsByCategory(segment));
-      if (pool.length === 0) pool = unused(QUESTIONS);
-      if (pool.length === 0) {
-        endGame();
-        return;
+        if (pool.length === 0) pool = unused(QUESTIONS);
+        if (pool.length === 0) {
+          endGame();
+          return;
+        }
+        const q = pool[Math.floor(Math.random() * pool.length)];
+        usedRef.current.add(q.id);
+        const entry = poolEntry(q.key)!;
+        pub = {
+          roundNo: round,
+          segment,
+          category: q.category,
+          markTarget: q.category,
+          mode: segment === "silueta" ? "silueta" : "foto",
+          prompt: q.prompt,
+          image: imageFor(q.key),
+          points: segment === "silueta" ? 2 : 1,
+          endsAt: Date.now() + ROUND_MS,
+        };
+        answer = { key: q.key, display: entry.display, aliases: entry.aliases };
       }
-      const q = pool[Math.floor(Math.random() * pool.length)];
-      usedRef.current.add(q.id);
-      const pub: PublicQuestion = {
-        roundNo: round,
-        segment,
-        category: q.category,
-        mode: segment === "silueta" ? "silueta" : "foto",
-        prompt: q.prompt,
-        image: imageFor(q.key),
-        points: segment === "silueta" ? 2 : 1,
-        endsAt: Date.now() + ROUND_MS,
-      };
+
       currentQRef.current = pub;
-      currentKeyRef.current = q.key;
+      currentAnswerRef.current = answer;
       setQuestion(pub);
       setReveal(null);
       setBuzzes([]);
@@ -244,18 +300,20 @@ export function useHostGame(code: string, roomId: string | null) {
       if (pendingMarkRef.current) return;
       const catsLeft = CATEGORIES.filter((c) => questionsByCategory(c).some((q) => !usedRef.current.has(q.id)));
       const charsLeft = CHAR_CATEGORIES.some((c) => questionsByCategory(c).some((q) => !usedRef.current.has(q.id)));
-      const anyLeft = QUESTIONS.some((q) => !usedRef.current.has(q.id));
+      const comodinesLeft = COMODIN_QUESTIONS.some((q) => !usedRef.current.has(q.id));
+      const anyLeft = QUESTIONS.some((q) => !usedRef.current.has(q.id)) || comodinesLeft;
       if (!anyLeft) {
         endGame();
         return;
       }
-      const segment = pickSegment(catsLeft, charsLeft, anyLeft);
+      const segment = pickSegment(catsLeft, charsLeft, comodinesLeft);
       const index = SEGMENTS.findIndex((s) => s.id === segment);
       rotationRef.current = nextRotation(rotationRef.current, index);
       roundRef.current += 1;
       const round = roundRef.current;
       setRoundNo(round);
       setSpin({ segment, rotation: rotationRef.current });
+      setSpinning(true);
       setQuestion(null);
       goPhase("spinning");
       emit({ t: "spin", roundNo: round, segment, rotation: rotationRef.current, durMs: SPIN_MS });
@@ -263,38 +321,41 @@ export function useHostGame(code: string, roomId: string | null) {
       hyperspace(true);
       setTimeout(() => {
         hyperspace(false);
+        setSpinning(false);
+      }, SPIN_MS);
+      setTimeout(() => {
         if (phaseRef.current === "spinning") askQuestion(segment, round);
-      }, SPIN_MS + 150);
+      }, SPIN_MS + SPIN_HOLD_MS);
     };
 
     const doReveal = (winner: RevealWinner | null) => {
       const pub = currentQRef.current;
-      const key = currentKeyRef.current;
-      if (!pub || !key) return;
+      const ans = currentAnswerRef.current;
+      if (!pub || !ans) return;
       if (timerRef.current) clearTimeout(timerRef.current);
-      const entry = poolEntry(key)!;
       if (winner) {
         scoresRef.current.set(winner.id, (scoresRef.current.get(winner.id) ?? 0) + pub.points);
-        pendingMarkRef.current = { pid: winner.id, category: pub.category, roundNo: pub.roundNo };
+        pendingMarkRef.current = { pid: winner.id, target: pub.markTarget, roundNo: pub.roundNo };
         setPendingPid(winner.id);
       }
       // Timeout round: nobody marks anything.
       const pubs = playersPub();
       playersRef.current = pubs;
       setPlayers(pubs);
-      setReveal({ winner, answerDisplay: entry.display, answerKey: key, points: pub.points });
+      setReveal({ winner, answerDisplay: ans.display, answerKey: ans.key, points: pub.points });
       goPhase("reveal");
       emit({
         t: "reveal",
         roundNo: roundRef.current,
-        answerKey: key,
-        answerDisplay: entry.display,
+        answerKey: ans.key,
+        answerDisplay: ans.display,
         winner,
         points: pub.points,
         prompt: pub.prompt,
         image: pub.image,
         mode: pub.mode,
         category: pub.category,
+        markTarget: pub.markTarget,
       });
       emit({ t: "scores", players: pubs });
       if (winner) sfx.correct();
@@ -330,7 +391,7 @@ export function useHostGame(code: string, roomId: string | null) {
       const marks = marksRef.current.get(pid);
       if (!pending || !card || !marks) return false;
       if (pending.pid !== pid) return false;
-      if (!canPlaceMark(card, marks, pending.category, cell)) return false;
+      if (!canPlaceMark(card, marks, pending.target, cell)) return false;
       marks.add(cell);
       pendingMarkRef.current = null;
       setPendingPid(null);
@@ -353,10 +414,9 @@ export function useHostGame(code: string, roomId: string | null) {
 
     const onAnswer = (ev: Extract<PlayerEvent, { t: "answer" }>) => {
       if (phaseRef.current !== "asking" || ev.roundNo !== roundRef.current) return;
-      const key = currentKeyRef.current;
-      if (!key) return;
-      const entry = poolEntry(key)!;
-      if (matchesAnswer(ev.text, entry.display, entry.aliases)) {
+      const ans = currentAnswerRef.current;
+      if (!ans) return;
+      if (matchesAnswer(ev.text, ans.display, ans.aliases)) {
         doReveal({ id: ev.pid, nick: ev.nick });
       } else {
         emit({ t: "wrong", nick: ev.nick });
@@ -423,7 +483,7 @@ export function useHostGame(code: string, roomId: string | null) {
         const marks = marksRef.current.get(pid);
         if (!pending || !card || !marks || pending.pid !== pid) return;
         const candidates: number[] = [];
-        for (let i = 0; i < card.length; i++) if (canPlaceMark(card, marks, pending.category, i)) candidates.push(i);
+        for (let i = 0; i < card.length; i++) if (canPlaceMark(card, marks, pending.target, i)) candidates.push(i);
         if (candidates.length === 0) return;
         const cell = candidates[Math.floor(Math.random() * candidates.length)];
         applyMark(pid, cell);
@@ -478,6 +538,7 @@ export function useHostGame(code: string, roomId: string | null) {
     presenceCount,
     roundNo,
     spin,
+    spinning,
     question,
     reveal,
     buzzes,

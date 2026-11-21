@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabase";
 import { roomChannel, sendPlayer } from "@/lib/realtime";
 import { sfx } from "@/lib/sfx";
 import { hyperspace } from "@/components/StarField";
-import type { Card, Category, HostEvent, PlayerPub, PublicQuestion } from "./types";
+import type { Card, HostEvent, MarkTarget, PlayerPub, PublicQuestion, SegmentId } from "./types";
 import { canPlaceMark, completedLine } from "./cards";
 import { SPIN_MS } from "./types";
 
@@ -30,13 +30,13 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
   const [card, setCard] = useState<Card | null>(null);
   const [marks, setMarks] = useState<Set<number>>(new Set());
   const [justMarkedCell, setJustMarkedCell] = useState<number | null>(null);
-  const [pendingMark, setPendingMark] = useState<Category | null>(null);
+  const [pendingMark, setPendingMark] = useState<MarkTarget | null>(null);
   const [winLine, setWinLine] = useState<number[] | null>(null);
   const [question, setQuestion] = useState<PublicQuestion | null>(null);
   const [reveal, setReveal] = useState<RevealState | null>(null);
   const [buzzes, setBuzzes] = useState<string[]>([]);
   const [scores, setScores] = useState<PlayerPub[]>([]);
-  const [spin, setSpin] = useState<{ rotation: number; segment: string } | null>(null);
+  const [spin, setSpin] = useState<{ rotation: number; segment: SegmentId } | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
   const [gameOver, setGameOver] = useState<{
@@ -51,7 +51,7 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
   const phaseRef = useRef<PlayerPhase>("lobby");
   const cardRef = useRef<Card | null>(null);
   const marksRef = useRef<Set<number>>(new Set());
-  const pendingMarkRef = useRef<Category | null>(null);
+  const pendingMarkRef = useRef<MarkTarget | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const nickRef = useRef<string | null>(nick);
   const pidRef = useRef<string | null>(pid);
@@ -170,7 +170,7 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
             setTimeout(() => {
               hyperspace(false);
               setSpinning(false);
-            }, SPIN_MS + 150);
+            }, SPIN_MS);
             break;
           }
           case "question": {
@@ -195,8 +195,9 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
             goPhase("reveal");
             // Only the winner earns a mark, and they choose where to place it.
             if (ev.winner && ev.winner.id === pidRef.current) {
-              pendingMarkRef.current = ev.category;
-              setPendingMark(ev.category);
+              const target: MarkTarget = ev.markTarget ?? ev.category;
+              pendingMarkRef.current = target;
+              setPendingMark(target);
               sfx.correct();
             } else {
               if (ev.winner) sfx.reveal();
@@ -259,14 +260,20 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
   /** Cells the player is allowed to click right now (placement affordance). */
   const markableCells = (): Set<number> => {
     const c = cardRef.current;
-    const cat = pendingMarkRef.current;
+    const target = pendingMarkRef.current;
     const out = new Set<number>();
-    if (!c || !cat) return out;
+    if (!c || !target) return out;
+    if (target === "any") {
+      for (let i = 0; i < c.length; i++) {
+        if (c[i] !== null && !marksRef.current.has(i)) out.add(i);
+      }
+      return out;
+    }
     const matches: number[] = [];
     const others: number[] = [];
     for (let i = 0; i < c.length; i++) {
       if (c[i] === null || marksRef.current.has(i)) continue;
-      if (c[i] === cat) matches.push(i);
+      if (c[i] === target) matches.push(i);
       else others.push(i);
     }
     if (matches.length > 0) matches.forEach((i) => out.add(i));

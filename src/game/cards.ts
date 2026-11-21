@@ -3,7 +3,7 @@
 // free center). Marks are position-based; the winner places them anywhere the
 // category matches (or anywhere free if that category is exhausted).
 
-import { CATEGORIES, type Card, type Category } from "./types";
+import { CATEGORIES, type Card, type Category, type MarkTarget } from "./types";
 
 export function generateCard(): Card {
   // 25 cells: 5 per category; one cell becomes the free center (index 12).
@@ -45,10 +45,11 @@ export function categoryExhausted(card: Card, marked: Set<number>, cat: Category
   return !card.some((c, i) => c === cat && !marked.has(i));
 }
 
-/** May `cell` be used to place a mark won in category `cat`? */
-export function canPlaceMark(card: Card, marked: Set<number>, cat: Category, cell: number): boolean {
+/** May `cell` be used to place a mark won for `target` ("any" for comodín)? */
+export function canPlaceMark(card: Card, marked: Set<number>, target: MarkTarget, cell: number): boolean {
   if (cell < 0 || cell >= card.length) return false;
   if (card[cell] === null) return false; // free center, not placeable
   if (marked.has(cell)) return false;
-  return card[cell] === cat || categoryExhausted(card, marked, cat);
+  if (target === "any") return true;
+  return card[cell] === target || categoryExhausted(card, marked, target);
 }

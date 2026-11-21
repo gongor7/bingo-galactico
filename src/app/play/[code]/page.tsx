@@ -200,10 +200,14 @@ export default function PlayPage() {
       {game.phase === "spinning" && (
         <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-void/90 px-4">
           <p className="mb-4 font-display text-[10px] tracking-[0.45em] text-ink-dim">
-            RONDA {String(game.question?.roundNo ?? "").padStart(2, "0")} · GIRANDO DESTINO
+            {game.spinning ? "GIRANDO DESTINO" : "DESTINO SELECCIONADO"}
           </p>
           <div className="w-full max-w-[340px]">
-            <Wheel rotation={game.spin?.rotation ?? 0} spinning={game.spinning} />
+            <Wheel
+              rotation={game.spin?.rotation ?? 0}
+              spinning={game.spinning}
+              selectedSegment={game.spin?.segment ?? null}
+            />
           </div>
         </div>
       )}
@@ -253,14 +257,6 @@ export default function PlayPage() {
               shakeKey={game.shakeKey}
             />
           </div>
-          <div className="order-2 flex flex-col gap-4 lg:order-1">
-            <QuestionPanel q={game.question} reveal={game.reveal} buzzes={game.buzzes} />
-            <AnswerInput
-              enabled={game.phase === "asking" && !game.reveal}
-              onSend={game.sendAnswer}
-              shakeKey={game.shakeKey}
-            />
-          </div>
           <div className="order-1 flex flex-col gap-4 lg:order-2">
             {game.card && (
               <Carton
@@ -287,10 +283,18 @@ export default function PlayPage() {
       {game.pendingMark && game.phase !== "over" && (
         <div className="fixed inset-0 z-[45] flex items-center justify-center overflow-y-auto bg-void/90 px-4 py-6">
           <div className="w-full max-w-md">
-            <HoloPanel title="Marca obligatoria" accent className="text-center">
-              <p className="anim-banner title-sw text-2xl">¡Tu punto, tu marca!</p>
+            <HoloPanel
+              title={game.pendingMark === "any" ? "Comodín ganado" : "Marca obligatoria"}
+              accent
+              className="text-center"
+            >
+              <p className="anim-banner title-sw text-2xl">
+                {game.pendingMark === "any" ? "¡Comodín! Elige libremente" : "¡Tu punto, tu marca!"}
+              </p>
               <p className="mt-2 text-xs leading-relaxed text-ink-dim">
-                Toca una casilla de tu cartón. El juego no sigue hasta que coloques tu marca.
+                {game.pendingMark === "any"
+                  ? "Superaste el desafío extremo. Toca CUALQUIER casilla vacía de tu cartón para llenarla."
+                  : "Toca una casilla de tu cartón. El juego no sigue hasta que coloques tu marca."}
               </p>
             </HoloPanel>
             <div className="mt-4">

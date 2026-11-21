@@ -13,12 +13,13 @@ import Wheel from "@/components/Wheel";
 import { IconSpin } from "@/components/Icons";
 import { generateCard } from "@/game/cards";
 import { imageFor } from "@/game/data";
-import { nextRotation } from "@/game/wheel";
-import type { PublicQuestion } from "@/game/types";
+import { nextRotation, SEGMENTS } from "@/game/wheel";
+import type { PublicQuestion, SegmentId } from "@/game/types";
 
 export default function DevPreview() {
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
+  const [selectedSeg, setSelectedSeg] = useState<SegmentId | null>(null);
   // Carta generada tras el montaje: Math.random() en el prerender rompería la hidratación.
   const [card, setCard] = useState<ReturnType<typeof generateCard> | null>(null);
   const [marked, setMarked] = useState<Set<number>>(new Set());
@@ -34,6 +35,7 @@ export default function DevPreview() {
     roundNo: 7,
     segment: "jedi",
     category: "jedi",
+    markTarget: "jedi",
     mode: "foto",
     prompt: "Pequeño, verde y de 900 años. «Hazlo o no lo hagas, pero no lo intentes».",
     image: imageFor("yoda"),
@@ -44,18 +46,32 @@ export default function DevPreview() {
     roundNo: 8,
     segment: "silueta",
     category: "sith",
+    markTarget: "sith",
     mode: "silueta",
     prompt: "Zabrak de Dathomir con sable de doble hoja que sobrevivió a quedar partido en dos.",
     image: imageFor("maul"),
     points: 2,
     endsAt: Date.now() + 21_000,
   };
-  const [mode, setMode] = useState<"foto" | "silueta" | "reveal">("foto");
+  const qComodin: PublicQuestion = {
+    roundNo: 9,
+    segment: "comodin",
+    category: "jedi",
+    markTarget: "any",
+    mode: "comodin",
+    prompt: "¿Cómo se llama la variante de la Forma VII de combate con sable de luz creada y perfeccionada por Mace Windu?",
+    image: "",
+    points: 3,
+    endsAt: Date.now() + 21_000,
+  };
+  const [mode, setMode] = useState<"foto" | "silueta" | "comodin" | "reveal">("foto");
 
   const spin = () => {
+    const idx = Math.floor(Math.random() * SEGMENTS.length);
+    setSelectedSeg(SEGMENTS[idx].id);
     setSpinning(true);
-    setRotation(nextRotation(rotation, Math.floor(Math.random() * 7)));
-    setTimeout(() => setSpinning(false), 4300);
+    setRotation(nextRotation(rotation, idx));
+    setTimeout(() => setSpinning(false), 4200);
   };
 
   return (
@@ -65,7 +81,7 @@ export default function DevPreview() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <HoloPanel title="Ruleta">
-          <Wheel rotation={rotation} spinning={spinning} />
+          <Wheel rotation={rotation} spinning={spinning} selectedSegment={selectedSeg} />
           <button
             onClick={spin}
             className="btn-primary mt-5 flex w-full items-center justify-center gap-2 px-6 py-3 text-xs"
@@ -95,7 +111,7 @@ export default function DevPreview() {
 
         <HoloPanel title="Pregunta · modos">
           <div className="mb-3 flex gap-1.5">
-            {(["foto", "silueta", "reveal"] as const).map((m) => (
+            {(["foto", "silueta", "comodin", "reveal"] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
@@ -111,7 +127,10 @@ export default function DevPreview() {
               reveal={{ winner: { id: "2", nick: "MandoFan" }, answerDisplay: "Yoda", answerKey: "yoda", points: 1 }}
             />
           ) : (
-            <QuestionPanel q={mode === "foto" ? qFoto : qSilueta} buzzes={["Wookiee", "HuttSlime"]} />
+            <QuestionPanel
+              q={mode === "foto" ? qFoto : mode === "silueta" ? qSilueta : qComodin}
+              buzzes={["Wookiee", "HuttSlime"]}
+            />
           )}
         </HoloPanel>
       </div>

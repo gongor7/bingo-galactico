@@ -1,6 +1,6 @@
 "use client";
 
-import type { Card as CardData, Category } from "@/game/types";
+import type { Card as CardData, Category, MarkTarget } from "@/game/types";
 import { IconCheck, IconStarFree } from "./Icons";
 
 export const CAT_COLORS: Record<Category, string> = {
@@ -37,7 +37,7 @@ export default function Carton({
   card: CardData;
   marks: Set<number>;
   justMarkedCell?: number | null;
-  pendingCategory?: Category | null;
+  pendingCategory?: MarkTarget | null;
   markable?: Set<number>;
   onMark?: (cell: number) => void;
   nick: string;
@@ -99,8 +99,13 @@ export default function Carton({
       </div>
 
       {pendingCategory && (
-        <p className="mt-2.5 px-0.5 font-display text-[9px] tracking-[0.24em]" style={{ color: CAT_COLORS[pendingCategory] }}>
-          GANASTE · MARCA UNA CASILLA {pendingCategory.toUpperCase()} (OBLIGATORIO)
+        <p
+          className="mt-2.5 px-0.5 font-display text-[9px] tracking-[0.24em]"
+          style={{ color: pendingCategory === "any" ? "#ffe81f" : CAT_COLORS[pendingCategory] }}
+        >
+          {pendingCategory === "any"
+            ? "¡COMODÍN GANADO! · ELIGE CUALQUIER CASILLA VACÍA (OBLIGATORIO)"
+            : `GANASTE · MARCA UNA CASILLA ${pendingCategory.toUpperCase()} (OBLIGATORIO)`}
         </p>
       )}
     </div>

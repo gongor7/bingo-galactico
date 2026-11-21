@@ -96,6 +96,37 @@ export default function QuestionPanel({
 
   return (
     <div className="panel p-4 sm:p-5">
+      {/* Filtro SVG para siluetas holográficas sobre imágenes opacas */}
+      <svg aria-hidden className="pointer-events-none absolute h-0 w-0 overflow-hidden">
+        <defs>
+          <filter id="sw-silueta" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="saturate" values="0" result="gray" />
+            <feGaussianBlur in="gray" stdDeviation="1.35" result="blurred" />
+            <feComponentTransfer in="blurred" result="darkBase">
+              <feFuncR type="linear" slope="0.18" intercept="-0.02" />
+              <feFuncG type="linear" slope="0.28" intercept="-0.02" />
+              <feFuncB type="linear" slope="0.38" intercept="0.01" />
+            </feComponentTransfer>
+            <feConvolveMatrix
+              in="blurred"
+              order="3"
+              kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1"
+              preserveAlpha="true"
+              result="edges"
+            />
+            <feColorMatrix
+              in="edges"
+              type="matrix"
+              values="0.32 0 0 0 0
+                      0 1.45 0 0 0
+                      0 0 1.9 0 0
+                      0 0 0 1 0"
+              result="cyanEdges"
+            />
+            <feBlend in="darkBase" in2="cyanEdges" mode="screen" />
+          </filter>
+        </defs>
+      </svg>
       {q ? (
         <>
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -109,15 +140,50 @@ export default function QuestionPanel({
                   <IconSilueta size={13} /> SILUETA ×2
                 </span>
               )}
+              {q.mode === "comodin" && (
+                <span className="chip" style={{ color: "#ffe81f", borderColor: "rgba(255,232,31,.45)" }}>
+                  <IconComodin size={13} /> DESAFÍO EXTREMO · ×3 PTS
+                </span>
+              )}
               <span className="font-display text-[10px] tracking-[0.28em] text-ink-faint">
-                R{String(q.roundNo).padStart(2, "0")} · {CATEGORY_LABEL[q.category]}
+                R{String(q.roundNo).padStart(2, "0")} ·{" "}
+                {q.mode === "comodin" ? "CASILLA LIBRE" : CATEGORY_LABEL[q.category]}
               </span>
             </div>
             {reveal ? null : <TimerBar endsAt={q.endsAt} />}
           </div>
 
           <div className={`flex flex-col items-start gap-5 ${big ? "sm:flex-row sm:items-center" : ""}`}>
-            {reveal ? (
+            {q.mode === "comodin" ? (
+              <div
+                key={reveal ? reveal.answerKey : `comodin-${q.roundNo}`}
+                className="frame-target relative flex aspect-square w-full max-w-[230px] shrink-0 flex-col items-center justify-center overflow-hidden border bg-surface2 px-4 text-center"
+                style={{ borderColor: "rgba(255,232,31,.4)" }}
+              >
+                <span className="anim-float" style={{ color: "#ffe81f" }}>
+                  <IconComodin size={48} />
+                </span>
+                {reveal ? (
+                  <>
+                    <span className="mt-3 font-display text-[9px] tracking-[0.3em] text-ink-faint">
+                      RESPUESTA DESCIFRADA
+                    </span>
+                    <span className="anim-pop mt-1.5 font-display text-base font-bold tracking-wide" style={{ color: "#ffe81f" }}>
+                      {reveal.answerDisplay}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="mt-3 font-display text-[10px] font-bold tracking-[0.28em]" style={{ color: "#ffe81f" }}>
+                      ARCHIVO CLASIFICADO
+                    </span>
+                    <span className="mt-1 text-[11px] leading-snug text-ink-dim">
+                      Sin pista visual · Nivel Maestro
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : reveal ? (
               <div
                 key={reveal.answerKey}
                 className="anim-pop frame-target relative aspect-square w-full max-w-[230px] shrink-0 overflow-hidden border border-line-strong bg-surface2"
@@ -160,7 +226,15 @@ export default function QuestionPanel({
                         {reveal.winner.nick} +{reveal.points}
                       </p>
                       <p className="mt-1 text-xs text-ink-dim">
-                        El ganador marca una casilla de <span className="text-ink">{q.category.toUpperCase()}</span> en su cartón.
+                        {q.markTarget === "any" ? (
+                          <>
+                            ¡Comodín! El ganador elige <span style={{ color: "#ffe81f" }}>CUALQUIER CASILLA VACÍA</span> de su cartón.
+                          </>
+                        ) : (
+                          <>
+                            El ganador marca una casilla de <span className="text-ink">{q.category.toUpperCase()}</span> en su cartón.
+                          </>
+                        )}
                       </p>
                     </>
                   ) : (
@@ -172,7 +246,9 @@ export default function QuestionPanel({
                 </div>
               ) : (
                 <p className="font-display text-[10px] tracking-[0.3em] text-ink-faint">
-                  EL PRIMERO EN ACERTAR GANA EL PUNTO
+                  {q.mode === "comodin"
+                    ? "DESAFÍO COMODÍN · QUIEN ACIERTE ELIGE CUALQUIER CASILLA"
+                    : "EL PRIMERO EN ACERTAR GANA EL PUNTO"}
                 </p>
               )}
 

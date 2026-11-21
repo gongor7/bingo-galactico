@@ -3,7 +3,7 @@
 // Each entry has 2 prompts with the same image/answer, so a game of ~20
 // rounds stays fresh across many sessions. Images: /public/sw/<key>.webp
 
-import type { Category, PoolEntry, Question } from "./types";
+import type { Category, ComodinQuestion, PoolEntry, Question } from "./types";
 
 export const POOLS: Record<Category, PoolEntry[]> = {
   jedi: [
@@ -237,3 +237,178 @@ export const QUESTIONS: Question[] = [
 export function questionsByCategory(cat: Category): Question[] {
   return QUESTIONS.filter((q) => q.category === cat);
 }
+
+/**
+ * Banco de COMODINES — nivel Maestro / Lore profundo.
+ * Sin foto de pista: quien acierte elige CUALQUIER casilla vacía de su cartón.
+ */
+export const COMODIN_QUESTIONS: ComodinQuestion[] = [
+  {
+    id: "comodin-vaapad",
+    key: "comodin-vaapad",
+    prompt: "¿Cómo se llama la variante de la Forma VII de combate con sable de luz creada y perfeccionada por Mace Windu?",
+    answerDisplay: "Vaapad",
+    aliases: ["vaapad", "vapad"],
+  },
+  {
+    id: "comodin-sifodyas",
+    key: "comodin-sifodyas",
+    prompt: "¿Qué Maestro Jedi encargó en secreto la creación del ejército clon en Kamino diez años antes de la Guerra de los Clones?",
+    answerDisplay: "Sifo-Dyas",
+    aliases: ["sifo dyas", "sifodyas", "syfo dyas", "maestro sifo dyas"],
+  },
+  {
+    id: "comodin-2187",
+    key: "comodin-2187",
+    prompt: "¿Cuál es el número de celda (4 dígitos) donde estuvo prisionera la Princesa Leia en la primera Estrella de la Muerte?",
+    answerDisplay: "2187",
+    aliases: ["celda 2187"],
+  },
+  {
+    id: "comodin-sheev",
+    key: "comodin-sheev",
+    prompt: "¿Cuál es el nombre de pila (primer nombre real) del Canciller y Emperador Palpatine?",
+    answerDisplay: "Sheev",
+    aliases: ["sheev palpatine"],
+  },
+  {
+    id: "comodin-ilum",
+    key: "comodin-ilum",
+    prompt: "¿Cómo se llama el planeta helado donde los iniciados Jedi realizaban El Encuentro para obtener su primer cristal kyber (y que luego el Imperio excavó)?",
+    answerDisplay: "Ilum",
+    aliases: ["planeta ilum"],
+  },
+  {
+    id: "comodin-darthbane",
+    key: "comodin-darthbane",
+    prompt: "¿Qué antiguo Lord Sith instauró la «Regla de Dos» (siempre dos hay: un maestro y un aprendiz)?",
+    answerDisplay: "Darth Bane",
+    aliases: ["bane", "darth bane"],
+  },
+  {
+    id: "comodin-plagueis",
+    key: "comodin-plagueis",
+    prompt: "¿Cómo se llamaba el maestro Sith de Darth Sidious, célebre por la «tragedia» que Palpatine le relata a Anakin en la ópera?",
+    answerDisplay: "Darth Plagueis",
+    aliases: ["plagueis", "plagueis el sabio", "darth plagueis el sabio"],
+  },
+  {
+    id: "comodin-chiss",
+    key: "comodin-chiss",
+    prompt: "¿Cuál es el nombre de la especie alienígena de piel azul y ojos rojos de las Regiones Desconocidas a la que pertenece el Gran Almirante Thrawn?",
+    answerDisplay: "Chiss",
+    aliases: ["ascendencia chiss", "los chiss"],
+  },
+  {
+    id: "comodin-scimitar",
+    key: "comodin-scimitar",
+    prompt: "¿Cuál es el nombre de la nave personal (Infiltrador Sith con dispositivo de camuflaje) de Darth Maul?",
+    answerDisplay: "Scimitar",
+    aliases: ["cimitarra", "la cimitarra", "el scimitar"],
+  },
+  {
+    id: "comodin-executor",
+    key: "comodin-executor",
+    prompt: "¿Cómo se llamaba el Super Destructor Estelar que servía como nave insignia de Darth Vader en los Episodios V y VI?",
+    answerDisplay: "Executor",
+    aliases: ["ejecutor", "el ejecutor", "el executor"],
+  },
+  {
+    id: "comodin-shili",
+    key: "comodin-shili",
+    prompt: "¿Cómo se llama el planeta natal de la especie Togruta, a la que pertenece Ahsoka Tano?",
+    answerDisplay: "Shili",
+    aliases: ["planeta shili"],
+  },
+  {
+    id: "comodin-malachor",
+    key: "comodin-malachor",
+    prompt: "¿En qué planeta devastado se encuentra el antiguo Templo Sith con la superarma donde Ahsoka Tano se enfrenta a Darth Vader en Rebels?",
+    answerDisplay: "Malachor",
+    aliases: ["malachor v", "malachor 5"],
+  },
+  {
+    id: "comodin-narkina5",
+    key: "comodin-narkina5",
+    prompt: "¿Cuál es el nombre de la prisión imperial de máxima seguridad sobre el océano donde Cassian Andor lidera una fuga masiva?",
+    answerDisplay: "Narkina 5",
+    aliases: ["narkina", "narkina cinco", "narkina5"],
+  },
+  {
+    id: "comodin-umbara",
+    key: "comodin-umbara",
+    prompt: "¿En qué planeta de oscuridad perpetua la Legión 501ª cayó en la trampa mortal del general Jedi traidor Pong Krell?",
+    answerDisplay: "Umbara",
+    aliases: ["planeta umbara"],
+  },
+  {
+    id: "comodin-hosnian",
+    key: "comodin-hosnian",
+    prompt: "¿Cómo se llamaba el planeta capital de la Nueva República destruido por la Base Starkiller en El Despertar de la Fuerza?",
+    answerDisplay: "Hosnian Prime",
+    aliases: ["hosnian", "sistema hosnian"],
+  },
+  {
+    id: "comodin-mortis",
+    key: "comodin-mortis",
+    prompt: "¿Cómo se llama el reino etéreo donde Anakin, Obi-Wan y Ahsoka encontraron al Padre, al Hijo y a la Hija en The Clone Wars?",
+    answerDisplay: "Mortis",
+    aliases: ["planeta mortis", "sistema mortis"],
+  },
+  {
+    id: "comodin-ahchto",
+    key: "comodin-ahchto",
+    prompt: "¿Cómo se llama el planeta oceánico donde se hallaba el primer Templo Jedi y donde Luke Skywalker vivió su exilio?",
+    answerDisplay: "Ahch-To",
+    aliases: ["ahch to", "ahchto", "achto", "ach to"],
+  },
+  {
+    id: "comodin-tibanna",
+    key: "comodin-tibanna",
+    prompt: "¿Cuál es el nombre exacto del gas que se extrae en Ciudad Nube (Bespin) y que se usa como munición de blásters y refrigerante de hiperimpulsores?",
+    answerDisplay: "Tibanna",
+    aliases: ["gas tibanna"],
+  },
+  {
+    id: "comodin-ig88",
+    key: "comodin-ig88",
+    prompt: "¿Cuál es la designación del droide asesino plateado convocado por Darth Vader junto a Boba Fett y Bossk en el puente del Executor (Episodio V)?",
+    answerDisplay: "IG-88",
+    aliases: ["ig88", "ig 88"],
+  },
+  {
+    id: "comodin-tipoca",
+    key: "comodin-tipoca",
+    prompt: "¿Cómo se llama la ciudad capital sobre pilotes de Kamino donde se clonaba y entrenaba al ejército de la República?",
+    answerDisplay: "Tipoca",
+    aliases: ["tipoca city", "ciudad tipoca", "ciudad de tipoca"],
+  },
+  {
+    id: "comodin-dathomir",
+    key: "comodin-dathomir",
+    prompt: "¿En qué planeta bañado en niebla roja habitan las Hermanas de la Noche (Nightsisters) y los Hermanos de la Noche?",
+    answerDisplay: "Dathomir",
+    aliases: ["planeta dathomir"],
+  },
+  {
+    id: "comodin-scarif",
+    key: "comodin-scarif",
+    prompt: "¿Cómo se llama el planeta tropical rodeado por un escudo planetario donde el Imperio guardaba los planos de la Estrella de la Muerte en Rogue One?",
+    answerDisplay: "Scarif",
+    aliases: ["planeta scarif"],
+  },
+  {
+    id: "comodin-slave1",
+    key: "comodin-slave1",
+    prompt: "¿Cuál es el nombre original de la nave patrullera clase Firespray-31 pilotada por Jango Fett y luego por Boba Fett?",
+    answerDisplay: "Slave I",
+    aliases: ["slave 1", "esclavo 1", "esclavo i", "slave one"],
+  },
+  {
+    id: "comodin-korriban",
+    key: "comodin-korriban",
+    prompt: "¿Cómo se llama el planeta desértico ancestral de los Sith (conocido como Korriban en Leyendas y por otro nombre en canon donde Yoda enfrenta a la ilusión de Darth Bane)?",
+    answerDisplay: "Moraband",
+    aliases: ["korriban", "moraband"],
+  },
+];

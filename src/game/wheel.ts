@@ -10,18 +10,19 @@ import type { Category, SegmentId } from "./types";
 export interface SegmentDef {
   id: SegmentId;
   label: string;
+  meaning: string;
   color: string;
   icon: string;
 }
 
 export const SEGMENTS: SegmentDef[] = [
-  { id: "jedi", label: "JEDI", color: "#3f9fe8", icon: "" },
-  { id: "sith", label: "SITH", color: "#e85555", icon: "" },
-  { id: "clones", label: "CLONES", color: "#5bc8c0", icon: "" },
-  { id: "droides", label: "DROIDES", color: "#d9b44a", icon: "" },
-  { id: "planetas", label: "PLANETAS", color: "#9c7fe8", icon: "" },
-  { id: "silueta", label: "SILUETA ×2", color: "#aab6d0", icon: "" },
-  { id: "comodin", label: "COMODÍN", color: "#ffe81f", icon: "" },
+  { id: "jedi", label: "JEDI", meaning: "Pregunta Jedi · Marca una casilla Jedi", color: "#3f9fe8", icon: "" },
+  { id: "sith", label: "SITH", meaning: "Pregunta Sith · Marca una casilla Sith", color: "#e85555", icon: "" },
+  { id: "clones", label: "CLONES", meaning: "Pregunta Clones · Marca una casilla Clon", color: "#5bc8c0", icon: "" },
+  { id: "droides", label: "DROIDES", meaning: "Pregunta Droides · Marca una casilla Droide", color: "#d9b44a", icon: "" },
+  { id: "planetas", label: "PLANETAS", meaning: "Pregunta Planetas · Marca una casilla Planeta", color: "#9c7fe8", icon: "" },
+  { id: "silueta", label: "SILUETA ×2", meaning: "Adivina por silueta · Vale doble puntaje", color: "#aab6d0", icon: "" },
+  { id: "comodin", label: "COMODÍN", meaning: "Desafío extremo · Elige cualquier casilla", color: "#ffe81f", icon: "" },
 ];
 
 export const SEGMENT_ANGLE = 360 / SEGMENTS.length;

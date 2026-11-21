@@ -261,13 +261,6 @@ body {
 .carton-cell.markable:hover {
   background: color-mix(in srgb, currentColor 22%, transparent);
 }
-.carton-cell.marked::after {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border: 2px solid currentColor;
-  opacity: 1;
-}
 .carton-cell.just-marked {
   animation: stamp 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
@@ -318,9 +311,13 @@ body {
 }
 .anim-banner { animation: banner-in 0.5s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
 
-/* Silueta: negro con filo cian */
+/* Silueta holográfica: contorno cian sobre sombra oscura (funciona en fotos opacas) */
+.silueta-wrap {
+  background: #04070b;
+}
 .silueta-wrap img {
-  filter: brightness(0) contrast(1.5) drop-shadow(0 0 10px rgba(88, 230, 255, 0.5));
+  filter: url(#sw-silueta);
+  transform: scale(1.03);
 }
 
 /* Marco de objetivo: esquinas de mira sobre la imagen */

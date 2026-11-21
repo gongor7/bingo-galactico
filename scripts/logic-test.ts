@@ -2,7 +2,7 @@
 import { normalize, levenshtein, matchesAnswer } from "../src/game/normalize";
 import { generateCard, completedLine, canPlaceMark, LINE_INDEXES } from "../src/game/cards";
 import { CATEGORIES, type Card, type Category } from "../src/game/types";
-import { POOLS, QUESTIONS } from "../src/game/data";
+import { COMODIN_QUESTIONS, POOLS, QUESTIONS } from "../src/game/data";
 import { SEGMENT_ANGLE, nextRotation, SEGMENTS } from "../src/game/wheel";
 
 let failures = 0;
@@ -66,6 +66,14 @@ check("categoría agotada habilita cualquier casilla vacía", (() => {
   const other = scatter.findIndex((c, i) => c !== null && c !== someCat && i !== 12);
   return canPlaceMark(scatter, full, someCat, other);
 })());
+check("comodín (target='any') habilita cualquier casilla vacía de cualquier categoría", (() => {
+  const other = scatter.findIndex((c, i) => c !== null && c !== someCat && i !== 12);
+  return canPlaceMark(scatter, new Set(), "any", other) && canPlaceMark(scatter, new Set(), "any", cellsOfCat[0]);
+})());
+check("comodín (target='any') NO habilita centro libre ni casilla ya marcada", (
+  !canPlaceMark(scatter, new Set(), "any", 12) &&
+  !canPlaceMark(scatter, new Set([cellsOfCat[0]]), "any", cellsOfCat[0])
+));
 check("banking: 2 preguntas por entrada", QUESTIONS.length === POOLS.jedi.length * 0 + QUESTIONS.filter((q) => q.category === "jedi").length + QUESTIONS.filter((q) => q.category === "sith").length + QUESTIONS.filter((q) => q.category === "clones").length + QUESTIONS.filter((q) => q.category === "droides").length + QUESTIONS.filter((q) => q.category === "planetas").length);
 
 // ── ruleta ────────────────────────────────────────────────────────────────
@@ -87,6 +95,10 @@ check("2 preguntas por entrada", [...poolKeys].every((k) => QUESTIONS.filter((q)
 check("ids de pregunta únicos", new Set(QUESTIONS.map((q) => q.id)).size === QUESTIONS.length);
 check("cada entrada del pool tiene su pregunta", [...poolKeys].every((k) => questionKeys.has(k)));
 check("preguntas sin claves huérfanas", [...questionKeys].every((k) => poolKeys.has(k)));
+check("segmentos tienen significado definido", SEGMENTS.every((s) => s.meaning.trim().length > 0));
+check("banco de comodines difícil (>=20 preguntas)", COMODIN_QUESTIONS.length >= 20);
+check("ids de comodín únicos", new Set(COMODIN_QUESTIONS.map((q) => q.id)).size === COMODIN_QUESTIONS.length);
+check("comodines matchean su respuesta canónica", COMODIN_QUESTIONS.every((q) => matchesAnswer(q.answerDisplay, q.answerDisplay, q.aliases)));
 
 console.log(failures === 0 ? "\nTODOS LOS TESTS PASARON ✓" : `\n${failures} FALLOS ✗`);
 process.exit(failures === 0 ? 0 : 1);

@@ -154,7 +154,11 @@ export default function HostPage() {
         <div className="grid gap-4 lg:grid-cols-[400px,minmax(0,1fr)]">
           <div className="flex flex-col gap-4">
             <HoloPanel title="Ruleta de destinos">
-              <Wheel rotation={game.spin?.rotation ?? 0} spinning={game.phase === "spinning"} />
+              <Wheel
+                rotation={game.spin?.rotation ?? 0}
+                spinning={game.spinning}
+                selectedSegment={game.spin?.segment ?? null}
+              />
               <p className="mt-4 text-center font-display text-[9px] tracking-[0.3em] text-ink-dim">
                 TURNO: <span style={{ color: "#58e6ff" }}>{game.turnNick || "—"}</span>
               </p>
@@ -164,13 +168,15 @@ export default function HostPage() {
                 disabled={!game.canSpin}
                 className="btn-primary mt-3 w-full px-6 py-3.5 text-xs"
               >
-                {game.phase === "spinning"
-                  ? `${segmentLabel ?? "Girando"}...`
-                  : game.phase === "ready"
-                    ? `Girar por ${game.turnNick || "—"}`
-                    : game.phase === "asking"
-                      ? "Ronda en curso"
-                      : "Resultados"}
+                {game.spinning
+                  ? "Girando..."
+                  : game.phase === "spinning"
+                    ? `${segmentLabel ?? "Listo"}`
+                    : game.phase === "ready"
+                      ? `Girar por ${game.turnNick || "—"}`
+                      : game.phase === "asking"
+                        ? "Ronda en curso"
+                        : "Resultados"}
               </button>
               {game.pendingPid && (
                 <div className="mt-3 border border-gold/40 bg-gold/5 p-3">
