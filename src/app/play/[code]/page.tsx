@@ -223,8 +223,11 @@ export default function PlayPage() {
             {game.card && (
               <Carton
                 card={game.card}
-                marked={game.marked}
-                justMarkedKey={game.justMarkedKey}
+                marks={game.marks}
+                justMarkedCell={game.justMarkedCell}
+                pendingCategory={game.pendingMark}
+                markable={game.markableCells()}
+                onMark={game.placeMark}
                 nick={session.nick}
                 winLine={game.winLine}
               />

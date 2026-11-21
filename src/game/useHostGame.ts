@@ -2,6 +2,10 @@
 
 // Host-authoritative game engine. All state transitions happen here and are
 // broadcast to players; host UI renders from the same state it broadcasts.
+//
+// Marking model (v2): only the round winner marks, and CHOOSES the cell on
+// their own cartón. Host validates (right category column, cell free) and
+// checks for line completion. Timeout rounds mark nothing.
 
 import { useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -24,7 +28,7 @@ import {
   type SegmentId,
 } from "./types";
 import { POOLS, QUESTIONS, imageFor, poolEntry, questionsByCategory } from "./data";
-import { completedLine, generateCard, hasKey } from "./cards";
+import { canPlaceMark, completedLine, generateCard } from "./cards";
 import { nextRotation, pickSegment, SEGMENTS } from "./wheel";
 import { matchesAnswer } from "./normalize";
 
@@ -39,6 +43,12 @@ export interface GameOverState {
   winner: RevealWinner | null;
   reason: "bingo" | "host";
   players: PlayerPub[];
+}
+
+interface PendingMark {
+  pid: string;
+  category: Category;
+  roundNo: number;
 }
 
 const CHAR_CATEGORIES: Category[] = CATEGORIES.filter((c) => c !== "planetas");
@@ -61,8 +71,9 @@ export function useHostGame(code: string, roomId: string | null) {
   const playersRef = useRef<PlayerPub[]>([]);
   const nicksRef = useRef<Map<string, string>>(new Map());
   const cardsRef = useRef<Map<string, Card>>(new Map());
-  const marksRef = useRef<Map<string, Set<string>>>(new Map());
+  const marksRef = useRef<Map<string, Set<number>>>(new Map());
   const scoresRef = useRef<Map<string, number>>(new Map());
+  const pendingMarkRef = useRef<PendingMark | null>(null);
   const usedRef = useRef<Set<string>>(new Set());
   const roundRef = useRef(0);
   const rotationRef = useRef(0);
@@ -106,7 +117,7 @@ export function useHostGame(code: string, roomId: string | null) {
         nick: p.nick,
         score: p.score,
       }));
-      for (const p of data as Array<{ id: string; nick: string; score: number; card: Card | null; marks: string[] | null }>) {
+      for (const p of data as Array<{ id: string; nick: string; score: number; card: Card | null; marks: number[] | null }>) {
         nicksRef.current.set(p.id, p.nick);
         // Recover state after a host refresh mid-game.
         if (p.card) {
@@ -139,6 +150,7 @@ export function useHostGame(code: string, roomId: string | null) {
       cardsRef.current = new Map();
       marksRef.current = new Map();
       scoresRef.current = new Map();
+      pendingMarkRef.current = null;
       usedRef.current = new Set();
       roundRef.current = 0;
       rotationRef.current = 0;
@@ -235,10 +247,12 @@ export function useHostGame(code: string, roomId: string | null) {
       if (!pub || !key) return;
       if (timerRef.current) clearTimeout(timerRef.current);
       const entry = poolEntry(key)!;
-      if (winner) scoresRef.current.set(winner.id, (scoresRef.current.get(winner.id) ?? 0) + pub.points);
-      for (const [pid, card] of cardsRef.current) {
-        if (hasKey(card, key)) marksRef.current.get(pid)?.add(key);
+      if (winner) {
+        scoresRef.current.set(winner.id, (scoresRef.current.get(winner.id) ?? 0) + pub.points);
+        // Winner earns the right to place a mark in this category's column.
+        pendingMarkRef.current = { pid: winner.id, category: pub.category, roundNo: pub.roundNo };
       }
+      // No winner (timeout) => nobody marks anything.
       const pubs = playersPub();
       playersRef.current = pubs;
       setPlayers(pubs);
@@ -254,6 +268,7 @@ export function useHostGame(code: string, roomId: string | null) {
         prompt: pub.prompt,
         image: pub.image,
         mode: pub.mode,
+        category: pub.category,
       });
       emit({ t: "scores", players: pubs });
       if (winner) sfx.correct();
@@ -294,11 +309,37 @@ export function useHostGame(code: string, roomId: string | null) {
       }
     };
 
+    const onMark = (ev: Extract<PlayerEvent, { t: "mark" }>) => {
+      const pending = pendingMarkRef.current;
+      const card = cardsRef.current.get(ev.pid);
+      const marks = marksRef.current.get(ev.pid);
+      if (!pending || !card || !marks) return;
+      if (pending.pid !== ev.pid) return;
+      if (!canPlaceMark(card, marks, pending.category, ev.cell)) return;
+      marks.add(ev.cell);
+      if (pendingMarkRef.current?.pid === ev.pid) pendingMarkRef.current = null;
+      if (completedLine(card, marks)) {
+        // Valid bingo claimed through a legal mark: end the game.
+        const pubs = playersPub();
+        const state: GameOverState = {
+          winner: { id: ev.pid, nick: nicksRef.current.get(ev.pid) ?? "?" },
+          reason: "bingo",
+          players: [...pubs].sort((a, b) => b.score - a.score),
+        };
+        setGameOver(state);
+        goPhase("over");
+        emit({ t: "gameover", ...state });
+        sfx.bingo();
+        void sb.from("rooms").update({ phase: "finished" }).eq("id", roomIdRef.current ?? "");
+      }
+      void persist();
+    };
+
     const onBingo = (ev: Extract<PlayerEvent, { t: "bingo" }>) => {
       const card = cardsRef.current.get(ev.pid);
-      const marked = marksRef.current.get(ev.pid);
-      if (!card || !marked) return;
-      if (!completedLine(card, marked)) return; // claim not valid, ignored
+      const marks = marksRef.current.get(ev.pid);
+      if (!card || !marks) return;
+      if (!completedLine(card, marks)) return; // claim not valid, ignored
       const pubs = playersPub();
       const state: GameOverState = {
         winner: { id: ev.pid, nick: ev.nick },
@@ -317,6 +358,7 @@ export function useHostGame(code: string, roomId: string | null) {
       .on("broadcast", { event: "msg" }, ({ payload }: { payload: unknown }) => {
         const ev = payload as PlayerEvent;
         if (ev.t === "answer") onAnswer(ev);
+        else if (ev.t === "mark") onMark(ev);
         else if (ev.t === "bingo") onBingo(ev);
       })
       .on("presence", { event: "join" }, () => {
@@ -336,6 +378,7 @@ export function useHostGame(code: string, roomId: string | null) {
 
     async function resetLobby() {
       if (timerRef.current) clearTimeout(timerRef.current);
+      pendingMarkRef.current = null;
       setGameOver(null);
       setQuestion(null);
       setReveal(null);

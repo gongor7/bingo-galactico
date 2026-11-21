@@ -2,6 +2,9 @@
 
 // Player-side realtime state: mirrors host events, manages cartón marks,
 // line detection and the bingo claim.
+//
+// Marking model (v2): only the winner marks, choosing a free cell in the
+// category column of the won question (any empty cell if that column is full).
 
 import { useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -9,8 +12,8 @@ import { supabase } from "@/lib/supabase";
 import { roomChannel, sendPlayer } from "@/lib/realtime";
 import { sfx } from "@/lib/sfx";
 import { hyperspace } from "@/components/StarField";
-import type { Card, HostEvent, PlayerPub, PublicQuestion } from "./types";
-import { completedLine, hasKey } from "./cards";
+import type { Card, Category, HostEvent, PlayerPub, PublicQuestion } from "./types";
+import { canPlaceMark, completedLine, categoryColumnIndexes } from "./cards";
 import { SPIN_MS } from "./types";
 
 export type PlayerPhase = "lobby" | "ready" | "spinning" | "asking" | "reveal" | "over";
@@ -25,8 +28,9 @@ export interface RevealState {
 export function usePlayerGame(code: string, pid: string | null, nick: string | null) {
   const [phase, setPhase] = useState<PlayerPhase>("lobby");
   const [card, setCard] = useState<Card | null>(null);
-  const [marked, setMarked] = useState<Set<string>>(new Set());
-  const [justMarkedKey, setJustMarkedKey] = useState<string | null>(null);
+  const [marks, setMarks] = useState<Set<number>>(new Set());
+  const [justMarkedCell, setJustMarkedCell] = useState<number | null>(null);
+  const [pendingMark, setPendingMark] = useState<Category | null>(null);
   const [winLine, setWinLine] = useState<number[] | null>(null);
   const [question, setQuestion] = useState<PublicQuestion | null>(null);
   const [reveal, setReveal] = useState<RevealState | null>(null);
@@ -44,8 +48,8 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
 
   const phaseRef = useRef<PlayerPhase>("lobby");
   const cardRef = useRef<Card | null>(null);
-  const markedRef = useRef<Set<string>>(new Set());
-  const claimedRef = useRef(false);
+  const marksRef = useRef<Set<number>>(new Set());
+  const pendingMarkRef = useRef<Category | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const nickRef = useRef<string | null>(nick);
   const pidRef = useRef<string | null>(pid);
@@ -53,6 +57,33 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
   const goPhase = (p: PlayerPhase) => {
     phaseRef.current = p;
     setPhase(p);
+  };
+
+  const winLineAnnounced = useRef(false);
+
+  /** Applies a legal mark locally (shared by the click path). */
+  const placeMarkLocal = (cell: number): boolean => {
+    const c = cardRef.current;
+    const cat = pendingMarkRef.current;
+    if (!c || !cat) return false;
+    if (!canPlaceMark(c, marksRef.current, cat, cell)) return false;
+    marksRef.current.add(cell);
+    setMarks(new Set(marksRef.current));
+    pendingMarkRef.current = null;
+    setPendingMark(null);
+    setJustMarkedCell(cell);
+    sfx.mark();
+    setTimeout(() => setJustMarkedCell((k) => (k === cell ? null : k)), 900);
+    const line = completedLine(c, marksRef.current);
+    if (line && !winLineAnnounced.current) {
+      winLineAnnounced.current = true;
+      setWinLine(line);
+      sfx.bingo();
+      if (channelRef.current && pidRef.current && nickRef.current) {
+        sendPlayer(channelRef.current, { t: "bingo", pid: pidRef.current, nick: nickRef.current });
+      }
+    }
+    return true;
   };
 
   useEffect(() => {
@@ -75,16 +106,16 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
           nick: string;
           score: number;
           card: Card | null;
-          marks: string[] | null;
+          marks: number[] | null;
           rooms: { code: string; phase: string }[] | null;
         };
         const room = row.rooms?.[0] ?? null;
         nickRef.current = row.nick;
         if (row.card) {
           cardRef.current = row.card;
-          markedRef.current = new Set(row.marks ?? []);
+          marksRef.current = new Set(row.marks ?? []);
           setCard(row.card);
-          setMarked(new Set(row.marks ?? []));
+          setMarks(new Set(row.marks ?? []));
           if (room && room.phase !== "lobby") goPhase("ready");
         }
         if (room?.phase === "lobby") goPhase("lobby");
@@ -96,25 +127,6 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
     const sb = supabase();
     const channel = roomChannel(sb, code, pid);
 
-    const markAndCheck = (key: string) => {
-      const c = cardRef.current;
-      if (!c || !hasKey(c, key) || markedRef.current.has(key)) return;
-      markedRef.current.add(key);
-      setMarked(new Set(markedRef.current));
-      setJustMarkedKey(key);
-      sfx.mark();
-      setTimeout(() => setJustMarkedKey((k) => (k === key ? null : k)), 900);
-      const line = completedLine(c, markedRef.current);
-      if (line && !claimedRef.current) {
-        claimedRef.current = true;
-        setWinLine(line);
-        sfx.bingo();
-        if (channelRef.current && pidRef.current && nickRef.current) {
-          sendPlayer(channelRef.current, { t: "bingo", pid: pidRef.current, nick: nickRef.current });
-        }
-      }
-    };
-
     channel
       .on("broadcast", { event: "msg" }, ({ payload }: { payload: unknown }) => {
         const ev = payload as HostEvent;
@@ -123,10 +135,12 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
             const me = ev.players.find((p) => p.id === pidRef.current);
             if (!me) break;
             cardRef.current = me.card;
-            markedRef.current = new Set();
-            claimedRef.current = false;
+            marksRef.current = new Set();
+            pendingMarkRef.current = null;
+            winLineAnnounced.current = false;
             setCard(me.card);
-            setMarked(new Set());
+            setMarks(new Set());
+            setPendingMark(null);
             setWinLine(null);
             setGameOver(null);
             setQuestion(null);
@@ -170,8 +184,14 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
             });
             setQuestion((q) => (q ? { ...q, endsAt: Date.now() } : q));
             goPhase("reveal");
-            markAndCheck(ev.answerKey);
-            if (ev.winner?.id !== pidRef.current) sfx.reveal();
+            // Only the winner earns a mark, and they choose where to place it.
+            if (ev.winner && ev.winner.id === pidRef.current) {
+              pendingMarkRef.current = ev.category;
+              setPendingMark(ev.category);
+              sfx.correct();
+            } else {
+              if (ev.winner) sfx.reveal();
+            }
             break;
           }
           case "scores": {
@@ -218,11 +238,40 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
     });
   };
 
+  /** Winner clicks a cell to place their earned mark. */
+  const placeMark = (cell: number) => {
+    if (!pidRef.current || !pendingMarkRef.current) return;
+    if (!placeMarkLocal(cell)) return;
+    if (channelRef.current) {
+      sendPlayer(channelRef.current, { t: "mark", pid: pidRef.current, cell });
+    }
+  };
+
+  /** Cells the player is allowed to click right now (placement affordance). */
+  const markableCells = (): Set<number> => {
+    const c = cardRef.current;
+    const cat = pendingMarkRef.current;
+    const out = new Set<number>();
+    if (!c || !cat) return out;
+    const col = categoryColumnIndexes(c, cat).filter((i) => !marksRef.current.has(i));
+    if (col.length > 0) {
+      col.forEach((i) => out.add(i));
+    } else {
+      // column full: the mark may go anywhere empty
+      for (let i = 0; i < c.length; i++) {
+        if (c[i] !== null && !marksRef.current.has(i)) out.add(i);
+      }
+    }
+    return out;
+  };
+
   return {
     phase,
     card,
-    marked,
-    justMarkedKey,
+    marks,
+    justMarkedCell,
+    pendingMark,
+    markableCells,
     winLine,
     question,
     reveal,
@@ -234,5 +283,6 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
     gameOver,
     connection,
     sendAnswer,
+    placeMark,
   };
 }

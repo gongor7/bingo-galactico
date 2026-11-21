@@ -154,16 +154,21 @@ export default function QuestionPanel({
               {reveal ? (
                 <div className="anim-banner border-l-2 border-cyan pl-4">
                   {reveal.winner ? (
-                    <p className="flex items-center gap-2 font-display text-lg font-bold tracking-wide text-ink sm:text-xl">
-                      <IconTrophy size={20} style={{ color: "#58e6ff" }} />
-                      {reveal.winner.nick} +{reveal.points}
-                    </p>
+                    <>
+                      <p className="flex items-center gap-2 font-display text-lg font-bold tracking-wide text-ink sm:text-xl">
+                        <IconTrophy size={20} style={{ color: "#58e6ff" }} />
+                        {reveal.winner.nick} +{reveal.points}
+                      </p>
+                      <p className="mt-1 text-xs text-ink-dim">
+                        El ganador marca una casilla de <span className="text-ink">{q.category.toUpperCase()}</span> en su cartón.
+                      </p>
+                    </>
                   ) : (
-                    <p className="font-display text-sm tracking-[0.2em] text-ink-dim">SIN GANADOR · TIEMPO AGOTADO</p>
+                    <>
+                      <p className="font-display text-sm tracking-[0.2em] text-ink-dim">SIN GANADOR · TIEMPO AGOTADO</p>
+                      <p className="mt-1 text-xs text-ink-dim">Nadie marca en esta ronda.</p>
+                    </>
                   )}
-                  <p className="mt-1 text-xs text-ink-dim">
-                    Marcan la casilla todos los que tengan <span className="text-ink">{reveal.answerDisplay}</span>.
-                  </p>
                 </div>
               ) : (
                 <p className="font-display text-[10px] tracking-[0.3em] text-ink-faint">

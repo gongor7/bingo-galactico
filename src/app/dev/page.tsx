@@ -21,13 +21,13 @@ export default function DevPreview() {
   const [spinning, setSpinning] = useState(false);
   // Carta generada tras el montaje: Math.random() en el prerender rompería la hidratación.
   const [card, setCard] = useState<ReturnType<typeof generateCard> | null>(null);
-  const [marked, setMarked] = useState<Set<string>>(new Set());
+  const [marked, setMarked] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const c = generateCard();
     setCard(c);
-    const keys = c.filter((x) => x !== null).map((x) => x!.key);
-    setMarked(new Set(keys.slice(0, 4)));
+    const cells = c.map((x, i) => (x !== null ? i : -1)).filter((i) => i >= 0);
+    setMarked(new Set(cells.slice(0, 4)));
   }, []);
 
   const qFoto: PublicQuestion = {
@@ -90,7 +90,7 @@ export default function DevPreview() {
               />
             </div>
           </HoloPanel>
-          {card && <Carton card={card} marked={marked} nick="Skywalker77" />}
+          {card && <Carton card={card} marks={marked} nick="Skywalker77" />}
         </div>
 
         <HoloPanel title="Pregunta · modos">

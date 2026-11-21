@@ -40,8 +40,11 @@ export interface PublicQuestion {
   endsAt: number;
 }
 
-/** 25 cells, row-major. null = free center at index 12. */
-export type Card = ({ key: string; cat: Category } | null)[];
+/**
+ * 25 cells, row-major. Each column is one of the 5 categories in RANDOM order
+ * (unique cartón per player); null = free center at index 12.
+ */
+export type Card = (Category | null)[];
 
 export interface PlayerPub {
   id: string;
@@ -70,6 +73,7 @@ export type HostEvent =
       prompt: string;
       image: string;
       mode: "foto" | "silueta";
+      category: Category;
     }
   | { t: "scores"; players: PlayerPub[] }
   | { t: "gameover"; winner: RevealWinner | null; reason: "bingo" | "host"; players: PlayerPub[] };
@@ -77,6 +81,7 @@ export type HostEvent =
 /** Players -> host. */
 export type PlayerEvent =
   | { t: "answer"; pid: string; nick: string; roundNo: number; text: string; ts: number }
+  | { t: "mark"; pid: string; cell: number }
   | { t: "bingo"; pid: string; nick: string };
 
 export const ROUND_MS = 35_000;

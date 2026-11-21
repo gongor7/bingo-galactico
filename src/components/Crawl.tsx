@@ -37,7 +37,7 @@ export default function Crawl({ onFinish }: { onFinish: () => void }) {
             temidas SILUETAS.
           </p>
           <p className="mb-6 text-lg leading-relaxed text-[#ffd54a] sm:text-xl">
-            Solo el primero en responder correctamente gana el punto. Quien
+            Solo el primero en responder gana el punto y elige dónde marcar en su cartón. Quien
             complete una línea en su cartón gritará BINGO y liberará la
             diversión de la galaxia...
           </p>

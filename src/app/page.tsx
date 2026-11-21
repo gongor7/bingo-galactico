@@ -102,7 +102,7 @@ export default function Landing() {
         <div className="mx-auto mt-6 h-px w-24 bg-cyan/50" />
         <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-dim">
           La ruleta elige la categoría. La imagen aparece en el proyector. El primero en
-          acertar suma — y <span className="text-ink">todo el que tenga la casilla la marca</span>.
+          acertar suma — y <span className="text-ink">elige dónde marcar en su cartón</span>.
           La primera línea gana la galaxia.
         </p>
       </header>
@@ -196,7 +196,7 @@ export default function Landing() {
             {
               icon: <IconJedi size={20} style={{ color: "#58e6ff" }} />,
               t: "Cartón",
-              d: "Quien tenga la respuesta la marca. Fila, columna o diagonal completa: ¡BINGO!",
+              d: "El ganador coloca su marca donde quiera de esa categoría. Línea completa: ¡BINGO!",
             },
           ].map((s) => (
             <div key={s.t} className="panel p-5">

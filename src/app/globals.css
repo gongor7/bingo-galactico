@@ -254,6 +254,20 @@ body {
   border: 2px solid currentColor;
   opacity: 1;
 }
+.carton-cell.markable {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  animation: pulse-line 1.4s ease-in-out infinite;
+}
+.carton-cell.markable:hover {
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+.carton-cell.marked::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 2px solid currentColor;
+  opacity: 1;
+}
 .carton-cell.just-marked {
   animation: stamp 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
 }

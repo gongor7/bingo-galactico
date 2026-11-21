@@ -7,13 +7,16 @@ láser y cartones que se marcan con retícula de tiro. Todo el audio es sintetiz
 (WebAudio), sin material con copyright.
 
 - **Host** crea la sala → los jugadores se unen con un **código**.
-- Al iniciar, cada jugador recibe un **cartón 5×5** con columnas por facción:
-  `JEDI · SITH · CLONES · DROIDES · PLANETAS` (+ estrella libre central).
+- Al iniciar, cada jugador recibe un **cartón 5×5** con las 5 categorías
+  (`JEDI · SITH · CLONES · DROIDES · PLANETAS`) en columnas de **orden aleatorio**
+  (cartón único por jugador) + estrella libre central.
 - Por turnos se gira la **ruleta** de categorías: Jedis, Siths, Clones, Droides,
   Planetas, **Silueta** (×2 puntos, el personaje aparece en negro) y **Comodín** (cualquier categoría).
 - La pregunta (foto, silueta o planeta) llega a **todos a la vez**: se abre un campo de
   respuesta con reintento hasta que alguien acierte. **El primero en acertar gana el punto**
-  (1 o 2 en silueta) y **todos los que tengan esa casilla en su cartón la marcan**.
+  (1 o 2 en silueta) y **elige dónde marcar** una casilla de esa categoría en su cartón
+  (si la columna está llena, en cualquier casilla vacía).
+- Si el tiempo se agota sin ganador, se revela la respuesta y **nadie marca** esa ronda.
 - La primera **línea completa** (fila, columna o diagonal) grita **¡BINGO!** y gana la partida.
 
 ## Stack
@@ -54,8 +57,8 @@ Vista previa de componentes sin Supabase: <http://localhost:3000/dev>
 | Puntos | 1 normal · 2 en SILUETA |
 | Reintento | Permitido hasta que alguien acierte (rate-limit 0,9 s) |
 | Tolerancia de respuesta | sin acentos/mayúsculas, alias aceptados, 1 error de tipeo en respuestas largas |
-| Victoria | primera línea (fila/columna/diagonal) |
-| Banca de preguntas | 52 (cada casilla posible tiene su pregunta) |
+| Victoria | primera línea (fila/columna/diagonal); el ganador de cada ronda coloca su marca |
+| Banca de preguntas | 52 (cobertura completa por categoría) |
 
 ## Notas de diseño y seguridad
 
