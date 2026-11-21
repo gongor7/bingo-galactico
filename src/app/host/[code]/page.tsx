@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import CodeTiles from "@/components/CodeTiles";
 import HoloPanel from "@/components/HoloPanel";
 import MuteButton from "@/components/MuteButton";
+import JoinQr from "@/components/JoinQr";
 import QuestionPanel from "@/components/QuestionPanel";
 import Scoreboard from "@/components/Scoreboard";
 import Wheel from "@/components/Wheel";
@@ -108,6 +109,7 @@ export default function HostPage() {
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-5">
           <HoloPanel title="Código de la sala" className="w-full" accent>
             <CodeTiles code={code} size="lg" />
+            <JoinQr code={code} />
             <p className="mt-5 text-center text-sm text-ink-dim">
               Los jugadores entran en la página principal y escriben este código.
             </p>

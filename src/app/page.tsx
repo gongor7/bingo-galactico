@@ -14,12 +14,23 @@ export default function Landing() {
   const [crawl, setCrawl] = useState(false);
   const [nick, setNick] = useState("");
   const [code, setCode] = useState("");
+  const [invited, setInvited] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const configured = supabaseConfigured();
 
   useEffect(() => {
     if (!localStorage.getItem("sw-crawl-seen")) setCrawl(true);
+    // Enlace de invitación (?room=CODE): precarga el código y enfoca el nombre.
+    const room = new URLSearchParams(window.location.search).get("room");
+    if (room) {
+      const c = normalizeCode(room).slice(0, 6);
+      if (c.length >= 4) {
+        setCode(c);
+        setInvited(true);
+        setTimeout(() => document.getElementById("nick-input")?.focus(), 400);
+      }
+    }
   }, []);
 
   const endCrawl = () => {
@@ -151,10 +162,11 @@ export default function Landing() {
               </div>
               <div>
                 <label className="mb-1.5 block font-display text-[9px] tracking-[0.3em] text-ink-faint">
-                  TU NOMBRE
+                  TU NOMBRE {invited && <span className="text-cyan">· SALA {code} DETECTADA</span>}
                 </label>
                 <input
                   className="input-sw px-3 py-2.5 font-display text-sm tracking-wider"
+                  id="nick-input"
                   placeholder="Ej: Skywalker77"
                   value={nick}
                   maxLength={16}
