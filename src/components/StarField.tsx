@@ -27,8 +27,8 @@ export default function StarField() {
     let w = 0;
     let h = 0;
     let stars: Star[] = [];
-    let speed = 0.05;
-    let targetSpeed = 0.05;
+    let speed = 0.03;
+    let targetSpeed = 0.03;
     let raf = 0;
 
     const resize = () => {
@@ -51,7 +51,7 @@ export default function StarField() {
 
     const onHyper = (e: Event) => {
       const detail = (e as CustomEvent<{ on: boolean }>).detail;
-      targetSpeed = detail?.on ? 46 : 0.05;
+      targetSpeed = detail?.on ? 34 : 0.03;
     };
 
     let t = 0;
@@ -60,9 +60,9 @@ export default function StarField() {
       speed += (targetSpeed - speed) * 0.04;
       ctx.clearRect(0, 0, w, h);
       for (const s of stars) {
-        const twinkle = 0.55 + 0.45 * Math.sin(t * 1.7 + s.phase);
-        const size = 0.5 + s.z * 1.6;
-        const alpha = (0.25 + s.z * 0.75) * twinkle;
+        const twinkle = 0.55 + 0.45 * Math.sin(t * 1.2 + s.phase);
+        const size = 0.5 + s.z * 1.4;
+        const alpha = (0.12 + s.z * 0.5) * twinkle;
         // drift slowly; in hyperspace, stars streak outward from center
         const dx = w / 2 - s.x;
         const dy = h / 2 - s.y;

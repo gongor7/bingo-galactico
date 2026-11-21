@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Crawl from "@/components/Crawl";
 import HoloPanel from "@/components/HoloPanel";
 import MuteButton from "@/components/MuteButton";
+import { IconJedi, IconPlanet, IconSignal, IconSilueta, IconSpin } from "@/components/Icons";
 import { generateRoomCode, normalizeCode, supabase, supabaseConfigured } from "@/lib/supabase";
 import { sfx } from "@/lib/sfx";
 
@@ -42,7 +43,7 @@ export default function Landing() {
           router.push(`/host/${roomCode}`);
           return;
         }
-        if (error.code !== "23505") throw new Error(error.message); // 23505 = código duplicado, reintenta
+        if (error.code !== "23505") throw new Error(error.message);
       }
       throw new Error("No se pudo generar un código único, intenta de nuevo");
     } catch (e) {
@@ -82,66 +83,65 @@ export default function Landing() {
   }
 
   return (
-    <main className="relative mx-auto flex min-h-screen max-w-5xl flex-col items-center px-4 py-8 sm:py-12">
+    <main className="relative mx-auto flex min-h-screen max-w-4xl flex-col items-center px-4 py-8 sm:py-14">
       {crawl && <Crawl onFinish={endCrawl} />}
 
       <div className="absolute right-4 top-4 flex gap-2">
-        <button onClick={() => setCrawl(true)} className="btn-ghost bg-black/50 px-3 py-1.5 text-[10px]">
+        <button onClick={() => setCrawl(true)} className="btn-ghost px-3 py-1.5 text-[10px]">
           Ver intro
         </button>
         <MuteButton />
       </div>
 
-      <header className="mb-10 mt-8 text-center">
-        <p className="font-display text-[10px] tracking-[0.6em] text-holo/70">HOLOMESA REBELDE · CANAL SEGURO</p>
-        <h1
-          className="title-sw mt-4 text-5xl leading-none sm:text-7xl"
-          style={{ transform: "scaleY(1.15)", transformOrigin: "center" }}
-        >
-          Bingo
-        </h1>
-        <h2 className="title-sw text-3xl sm:text-5xl" style={{ transform: "scaleY(1.1)" }}>
-          Galáctico
-        </h2>
-        <p className="mt-5 max-w-xl text-sm leading-relaxed text-dim sm:text-base">
-          La ruleta decide la categoría. La foto aparece en el proyector. El primero
-          en acertar se lleva el punto — y <span className="text-starlight">todo el que tenga la casilla la marca</span>.
-          Completa una línea y libera la galaxia.
+      <header className="mb-12 mt-10 text-center">
+        <p className="font-display text-[9px] tracking-[0.55em] text-ink-faint">
+          CONSOLA DE MANDO · CANAL CIFRADO
+        </p>
+        <h1 className="title-sw mt-6 text-5xl leading-none sm:text-7xl">Bingo</h1>
+        <h2 className="title-sw text-3xl sm:text-5xl">Galáctico</h2>
+        <div className="mx-auto mt-6 h-px w-24 bg-cyan/50" />
+        <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-ink-dim">
+          La ruleta elige la categoría. La imagen aparece en el proyector. El primero en
+          acertar suma — y <span className="text-ink">todo el que tenga la casilla la marca</span>.
+          La primera línea gana la galaxia.
         </p>
       </header>
 
       {!configured ? (
-        <HoloPanel title="Requiere configuración" className="w-full max-w-xl">
+        <HoloPanel title="Requiere configuración" className="w-full max-w-xl" accent>
           <SetupNotice />
         </HoloPanel>
       ) : (
-        <div className="grid w-full gap-5 md:grid-cols-2">
-          <HoloPanel title="Crear sala (Host)" className="flex flex-col">
-            <div className="mb-4 flex-1 text-sm leading-relaxed text-dim">
-              <p>
-                Serás <span className="text-starlight">Comandante de la holomesa</span>: giras la ruleta,
-                vigilas respuestas y controlas la partida. Los demás se unen con tu código.
+        <div className="grid w-full gap-4 md:grid-cols-2">
+          <HoloPanel title="Crear sala · Host" accent className="flex flex-col">
+            <div className="mb-5 flex-1">
+              <p className="text-sm leading-relaxed text-ink-dim">
+                Diriges la consola: giras la ruleta, vigilas el canal de respuestas y controlas
+                la partida. Los demás entran con tu código.
               </p>
-              <p className="mt-2 font-display text-[10px] tracking-[0.3em] text-holo/70">
-                ▸ NO NECESITAS NOMBRE · NO JUEGAS, DIRIGES
+              <p className="mt-3 flex items-center gap-2 font-display text-[9px] tracking-[0.3em] text-ink-faint">
+                <IconSignal size={13} style={{ color: "#58e6ff" }} />
+                NO JUEGAS · OPERAS LA CONSOLA
               </p>
             </div>
             <button
               onClick={createRoom}
               onMouseEnter={() => sfx.hover()}
               disabled={busy}
-              className="btn-sw bg-swyellow px-6 py-4 text-sm text-black"
+              className="btn-primary w-full px-6 py-4 text-sm"
             >
-              {busy ? "Abriendo canal..." : "⚡ Crear sala"}
+              {busy ? "Abriendo canal..." : "Crear sala"}
             </button>
           </HoloPanel>
 
           <HoloPanel title="Unirse con código" className="flex flex-col">
-            <div className="mb-4 flex flex-1 flex-col gap-3">
+            <div className="mb-4 flex flex-1 flex-col gap-3.5">
               <div>
-                <label className="mb-1 block font-display text-[10px] tracking-[0.3em] text-dim">CÓDIGO DE SALA</label>
+                <label className="mb-1.5 block font-display text-[9px] tracking-[0.3em] text-ink-faint">
+                  CÓDIGO DE SALA
+                </label>
                 <input
-                  className="input-sw px-3 py-3 text-center font-display text-2xl tracking-[0.5em] uppercase"
+                  className="input-sw px-3 py-3 text-center font-display text-2xl font-bold tracking-[0.45em]"
                   placeholder="ABC12"
                   value={code}
                   maxLength={6}
@@ -150,9 +150,11 @@ export default function Landing() {
                 />
               </div>
               <div>
-                <label className="mb-1 block font-display text-[10px] tracking-[0.3em] text-dim">TU NOMBRE</label>
+                <label className="mb-1.5 block font-display text-[9px] tracking-[0.3em] text-ink-faint">
+                  TU NOMBRE
+                </label>
                 <input
-                  className="input-sw px-3 py-2.5 font-display text-sm tracking-widest"
+                  className="input-sw px-3 py-2.5 font-display text-sm tracking-wider"
                   placeholder="Ej: Skywalker77"
                   value={nick}
                   maxLength={16}
@@ -165,38 +167,52 @@ export default function Landing() {
               onClick={joinRoom}
               onMouseEnter={() => sfx.hover()}
               disabled={busy}
-              className="btn-sw bg-jedi px-6 py-4 text-sm text-black"
+              className="btn-primary w-full px-6 py-4 text-sm"
             >
-              {busy ? "Entrando..." : "🚀 Unirme a la batalla"}
+              {busy ? "Entrando..." : "Unirme a la batalla"}
             </button>
           </HoloPanel>
         </div>
       )}
 
       {err && (
-        <p className="anim-pop mt-4 border border-sith/50 bg-sith/10 px-4 py-2 text-sm text-sith">⚠ {err}</p>
+        <p className="anim-pop mt-5 border border-sith/40 bg-sith/10 px-4 py-2 text-sm text-sith">{err}</p>
       )}
 
-      <section className="mt-12 w-full max-w-3xl">
-        <h3 className="holo-title mb-4">Protocolo de juego</h3>
-        <div className="grid gap-3 sm:grid-cols-3">
+      <section className="mt-14 w-full max-w-3xl">
+        <h3 className="panel-title mb-4">Protocolo de juego</h3>
+        <div className="grid gap-4 sm:grid-cols-3">
           {[
-            { n: "01", t: "Ruleta", d: "El host gira. Cae en Jedis, Siths, Clones, Droides, Planetas, Silueta ×2 o Comodín." },
-            { n: "02", t: "Pregunta", d: "Foto, silueta o planeta. Todos escriben a la vez; reintento permitido hasta que alguien acierte." },
-            { n: "03", t: "Cartón", d: "Quien tenga la respuesta la marca. Línea completa = ¡BINGO! y victoria." },
+            {
+              icon: <IconSpin size={20} style={{ color: "#58e6ff" }} />,
+              t: "Ruleta",
+              d: "Jedis, Siths, Clones, Droides o Planetas. Silueta vale doble; Comodín decide por ti.",
+            },
+            {
+              icon: <IconSilueta size={20} style={{ color: "#58e6ff" }} />,
+              t: "Pregunta",
+              d: "Foto, silueta o planeta. Todos escriben a la vez; puedes reintentar hasta que alguien acierte.",
+            },
+            {
+              icon: <IconJedi size={20} style={{ color: "#58e6ff" }} />,
+              t: "Cartón",
+              d: "Quien tenga la respuesta la marca. Fila, columna o diagonal completa: ¡BINGO!",
+            },
           ].map((s) => (
-            <div key={s.n} className="holo-panel holo-corners p-4">
-              <span className="title-sw text-xl">{s.n}</span>
-              <h4 className="mt-1 font-display text-xs tracking-[0.25em] text-starlight">{s.t}</h4>
-              <p className="mt-2 text-xs leading-relaxed text-dim">{s.d}</p>
+            <div key={s.t} className="panel p-5">
+              {s.icon}
+              <h4 className="mt-3 font-display text-xs font-bold tracking-[0.25em] text-ink">{s.t}</h4>
+              <p className="mt-2 text-xs leading-relaxed text-ink-dim">{s.d}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <footer className="mt-12 pb-4 text-center text-[10px] leading-relaxed text-dim/60">
-        Proyecto fan hecho para fiestas · Sin afiliación con Lucasfilm/Disney ·
-        Imágenes: Wookieepedia (Fandom) · <button className="underline" onClick={() => setCrawl(true)}>repetir intro</button>
+      <footer className="mt-14 pb-4 text-center text-[10px] leading-relaxed text-ink-faint">
+        Proyecto fan para fiestas · Sin afiliación con Lucasfilm/Disney · Imágenes: Wookieepedia ·{" "}
+        <button className="underline" onClick={() => setCrawl(true)}>
+          repetir intro
+        </button>
       </footer>
     </main>
   );
@@ -204,24 +220,24 @@ export default function Landing() {
 
 function SetupNotice() {
   return (
-    <div className="text-sm leading-relaxed text-dim">
+    <div className="text-sm leading-relaxed text-ink-dim">
       <p className="mb-3">
-        Falta conectar <span className="text-starlight">Supabase</span>. Pasos:
+        Falta conectar <span className="text-ink">Supabase</span>. Pasos:
       </p>
       <ol className="ml-4 list-decimal space-y-2">
         <li>
           Crea un proyecto gratis en{" "}
-          <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-holo underline">
+          <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-cyan underline">
             supabase.com
           </a>
           .
         </li>
         <li>
-          En <em>SQL Editor</em> ejecuta el contenido de <code className="text-swyellow">supabase/schema.sql</code>.
+          En <em>SQL Editor</em> ejecuta <code className="text-gold">supabase/schema.sql</code>.
         </li>
         <li>
-          Copia <code className="text-swyellow">.env.example</code> a <code className="text-swyellow">.env.local</code>{" "}
-          con tu URL y anon key (Project Settings → API).
+          Copia <code className="text-gold">.env.example</code> a <code className="text-gold">.env.local</code> con tu
+          URL y anon key.
         </li>
         <li>Reinicia el servidor.</li>
       </ol>

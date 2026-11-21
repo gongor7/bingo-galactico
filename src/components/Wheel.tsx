@@ -3,10 +3,30 @@
 import { useEffect, useRef } from "react";
 import { SEGMENTS, SEGMENT_ANGLE } from "@/game/wheel";
 import { sfx } from "@/lib/sfx";
+import {
+  IconClone,
+  IconComodin,
+  IconDroid,
+  IconJedi,
+  IconPlanet,
+  IconSilueta,
+  IconSith,
+} from "./Icons";
 
 const CX = 200;
 const CY = 200;
-const R = 188;
+const R = 186;
+const EASE = "cubic-bezier(.12,.82,.06,1)";
+
+const ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
+  jedi: IconJedi,
+  sith: IconSith,
+  clones: IconClone,
+  droides: IconDroid,
+  planetas: IconPlanet,
+  silueta: IconSilueta,
+  comodin: IconComodin,
+};
 
 function polar(angleDeg: number, radius: number): [number, number] {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -18,13 +38,14 @@ function segmentPath(index: number): string {
   const a1 = (index + 1) * SEGMENT_ANGLE;
   const [x0, y0] = polar(a0, R);
   const [x1, y1] = polar(a1, R);
-  const large = SEGMENT_ANGLE > 180 ? 1 : 0;
-  return `M ${CX} ${CY} L ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} Z`;
+  return `M ${CX} ${CY} L ${x0} ${y0} A ${R} ${R} 0 0 1 ${x1} ${y1} Z`;
 }
 
 /**
- * Holoprojector wheel. Rotation is an absolute degree value (set by the host
- * engine); the CSS transition animates there and rAF ticks play per segment.
+ * Ruleta de la consola. Etiquetas giroscópicas: cada grupo contra-rota
+ * (-(rotación + ángulo del segmento)) con la MISMA curva de transición que
+ * el rotor, de modo que quedan horizontales para el espectador durante
+ * todo el giro y en reposo.
  */
 export default function Wheel({
   rotation,
@@ -40,7 +61,6 @@ export default function Wheel({
   const rotorRef = useRef<SVGGElement>(null);
   const lastTickSeg = useRef<number>(-1);
 
-  // Play a tick each time the rotation crosses a segment boundary.
   useEffect(() => {
     if (!spinning || typeof window === "undefined") return;
     let raf = 0;
@@ -59,112 +79,98 @@ export default function Wheel({
     return () => cancelAnimationFrame(raf);
   }, [spinning]);
 
+  const gyroStyle = (c: number): React.CSSProperties => ({
+    transform: `rotate(${-(rotation + c)}deg)`,
+    transformBox: "fill-box",
+    transformOrigin: "center",
+    transition: `transform ${durMs}ms ${EASE}`,
+  });
+
   return (
     <div className={`relative mx-auto aspect-square w-full max-w-[420px] ${className}`}>
-      {/* Lightsaber pointer */}
-      <div
-        className="saber-pointer absolute left-1/2 top-[-12px] z-10 flex -translate-x-1/2 flex-col items-center"
-        style={{ filter: spinning ? "drop-shadow(0 0 12px rgba(255,60,60,.95))" : "drop-shadow(0 0 6px rgba(255,60,60,.55))" }}
-        aria-hidden
-      >
-        <div className="h-10 w-5 rounded-sm bg-gradient-to-b from-[#aab4c5] via-[#3c4454] to-[#141821] shadow-inner" />
+      {/* Soporte maquinado + aguja-sable (único rojo del sistema) */}
+      <div className="absolute left-1/2 top-[-16px] z-10 flex -translate-x-1/2 flex-col items-center" aria-hidden>
         <div
-          className="w-[7px] rounded-full transition-all"
-          style={{
-            height: spinning ? 92 : 64,
-            background: "linear-gradient(90deg, #fff5f5, #ff4b3e 45%, #b31212)",
-            boxShadow: spinning ? "0 0 22px 5px rgba(255,70,60,.85)" : "0 0 12px 3px rgba(255,70,60,.5)",
-          }}
-        />
+          className="flex h-3.5 w-12 items-center justify-between border px-1.5"
+          style={{ borderTopWidth: 0, borderColor: "rgba(168,196,224,.4)", background: "#10141b" }}
+        >
+          <span className="h-1 w-1 rounded-full" style={{ background: "#9aa8bb" }} />
+          <span className="h-1 w-1 rounded-full" style={{ background: "#9aa8bb" }} />
+        </div>
+        <div className="flex flex-col items-center pt-0.5">
+          <div className="h-6 w-3.5 bg-gradient-to-b from-[#8b95a5] via-[#333a47] to-[#10141b]" />
+          <div
+            className="w-[5px] rounded-full transition-all"
+            style={{
+              height: spinning ? 78 : 54,
+              background: "linear-gradient(90deg,#fff6f6,#ff4b3e 45%,#8f1010)",
+              boxShadow: spinning ? "0 0 18px 4px rgba(255,70,60,.65)" : "0 0 10px 2px rgba(255,70,60,.4)",
+            }}
+          />
+        </div>
       </div>
 
       <svg viewBox="0 0 400 400" className="h-full w-full" role="img" aria-label="Ruleta de categorías">
-        <defs>
-          <radialGradient id="hub" cx="50%" cy="35%">
-            <stop offset="0%" stopColor="#22304d" />
-            <stop offset="100%" stopColor="#060a14" />
-          </radialGradient>
-          {SEGMENTS.map((s) => (
-            <radialGradient key={s.id} id={`seg-${s.id}`} cx="50%" cy="50%" r="75%">
-              <stop offset="0%" stopColor={s.color} stopOpacity="0.28" />
-              <stop offset="70%" stopColor={s.color} stopOpacity="0.5" />
-              <stop offset="100%" stopColor={s.color} stopOpacity="0.85" />
-            </radialGradient>
-          ))}
-        </defs>
-
-        {/* outer ring */}
-        <circle cx={CX} cy={CY} r={R + 9} fill="#0a0f1c" stroke="rgba(102,217,255,.4)" strokeWidth="2" />
-        <circle cx={CX} cy={CY} r={R + 3} fill="#0d1424" stroke="rgba(255,232,31,.35)" strokeWidth="1.5" />
+        {/* anillo exterior calibrado */}
+        <circle cx={CX} cy={CY} r={R + 10} fill="none" stroke="rgba(168,196,224,.18)" strokeWidth="1" />
+        <circle cx={CX} cy={CY} r={R + 4} fill="#080b0f" stroke="rgba(168,196,224,.3)" strokeWidth="1" />
+        {SEGMENTS.map((_, i) => {
+          const [tx, ty] = polar(i * SEGMENT_ANGLE, R + 7);
+          return <circle key={i} cx={tx} cy={ty} r="1.4" fill="rgba(168,196,224,.55)" />;
+        })}
 
         <g
           ref={rotorRef}
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: "200px 200px",
-            transition: `transform ${durMs}ms cubic-bezier(.12,.82,.06,1)`,
+            transition: `transform ${durMs}ms ${EASE}`,
           }}
         >
           {SEGMENTS.map((s, i) => {
-            const center = i * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
+            const c = i * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
+            const Icon = ICONS[s.id];
             return (
               <g key={s.id}>
-                <path d={segmentPath(i)} fill={`url(#seg-${s.id})`} stroke="#04070f" strokeWidth="2.5" />
-                <g transform={`rotate(${center} ${CX} ${CY})`}>
-                  <text
-                    x={CX}
-                    y={CY - R + 62}
-                    textAnchor="middle"
-                    fontSize="20"
-                    fontWeight="800"
-                    fill="#eaf4ff"
-                    stroke="#04070f"
-                    strokeWidth="3.5"
-                    paintOrder="stroke"
-                    style={{ fontFamily: "var(--font-display)", letterSpacing: "0.1em" }}
-                  >
-                    {s.label}
-                  </text>
-                  <text x={CX} y={CY - R + 104} textAnchor="middle" fontSize="31">
-                    {s.icon}
-                  </text>
-                  {s.id === "silueta" && (
-                    <text
-                      x={CX}
-                      y={CY - R + 130}
-                      textAnchor="middle"
-                      fontSize="13"
-                      fill="#ffe81f"
-                      stroke="#04070f"
-                      strokeWidth="2.5"
-                      paintOrder="stroke"
-                      fontWeight="700"
-                    >
-                      ×2 PTS
-                    </text>
-                  )}
+                <path d={segmentPath(i)} fill={s.color} fillOpacity={0.22} stroke="rgba(168,196,224,.28)" strokeWidth="1" />
+                <g transform={`rotate(${c} ${CX} ${CY})`}>
+                  {/* etiqueta giroscópica: siempre horizontal */}
+                  <g transform={`translate(${CX} ${CY - 112})`}>
+                    <g style={gyroStyle(c)}>
+                      <text
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize="15"
+                        fontWeight="700"
+                        fill="#e9eff6"
+                        style={{ fontFamily: "var(--font-display)", letterSpacing: "0.08em" }}
+                      >
+                        {s.label}
+                      </text>
+                    </g>
+                  </g>
+                  {/* icono giroscópico en color de facción */}
+                  <g transform={`translate(${CX - 12} ${CY - 58})`}>
+                    <g style={gyroStyle(c)} color={s.color}>
+                      <Icon size={24} />
+                    </g>
+                  </g>
                 </g>
               </g>
             );
           })}
-          {/* rivets */}
-          {SEGMENTS.map((_, i) => {
-            const [x, y] = polar(i * SEGMENT_ANGLE, R - 4);
-            return <circle key={i} cx={x} cy={y} r="2.6" fill="rgba(255,255,255,.55)" />;
-          })}
         </g>
 
-        {/* hub + rebel star */}
-        <circle cx={CX} cy={CY} r="52" fill="url(#hub)" stroke="rgba(255,232,31,.5)" strokeWidth="2" />
-        <g transform={`translate(${CX} ${CY})`}>
-          <path
-            d="M 0 -26 L 7 -8 L 26 -8 L 11 4 L 17 23 L 0 11 L -17 23 L -11 4 L -26 -8 L -7 -8 Z"
-            fill="none"
-            stroke="#ffe81f"
-            strokeWidth="2.4"
-            opacity="0.95"
-          />
-        </g>
+        {/* hub maquinado: anillos + ticks + punto */}
+        <circle cx={CX} cy={CY} r="42" fill="#070a0e" stroke="rgba(168,196,224,.34)" strokeWidth="1" />
+        <circle cx={CX} cy={CY} r="33" fill="none" stroke="rgba(88,230,255,.45)" strokeWidth="1" />
+        <circle cx={CX} cy={CY} r="25" fill="none" stroke="rgba(168,196,224,.2)" strokeWidth="1" />
+        {Array.from({ length: 6 }, (_, k) => {
+          const [x1, y1] = polar((k * 360) / 6, 24);
+          const [x2, y2] = polar((k * 360) / 6, 31);
+          return <line key={k} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(88,230,255,.8)" strokeWidth="1.6" />;
+        })}
+        <circle cx={CX} cy={CY} r="3" fill="#58e6ff" />
       </svg>
     </div>
   );

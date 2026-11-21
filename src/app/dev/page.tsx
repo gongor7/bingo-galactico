@@ -1,7 +1,7 @@
 "use client";
 
 // Dev-only preview of the core visual components with mock data.
-// Visit /dev — no Supabase required. Excluded from nothing, but harmless.
+// Visit /dev — no Supabase required.
 
 import { useEffect, useState } from "react";
 import Carton from "@/components/Carton";
@@ -10,6 +10,7 @@ import HoloPanel from "@/components/HoloPanel";
 import QuestionPanel from "@/components/QuestionPanel";
 import Scoreboard from "@/components/Scoreboard";
 import Wheel from "@/components/Wheel";
+import { IconSpin } from "@/components/Icons";
 import { generateCard } from "@/game/cards";
 import { imageFor } from "@/game/data";
 import { nextRotation } from "@/game/wheel";
@@ -59,18 +60,22 @@ export default function DevPreview() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <h1 className="title-sw mb-1 text-3xl">Vista previa /dev</h1>
-      <p className="mb-6 text-xs text-dim">Componentes con datos simulados — sin Supabase.</p>
+      <h1 className="title-plain mb-1 text-2xl">Vista previa /dev</h1>
+      <p className="mb-6 text-xs text-ink-faint">Componentes con datos simulados — sin Supabase.</p>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <HoloPanel title="Ruleta">
           <Wheel rotation={rotation} spinning={spinning} />
-          <button onClick={spin} className="btn-sw mt-4 w-full bg-swyellow px-6 py-3 text-xs text-black">
-            🎯 Girar (aleatorio)
+          <button
+            onClick={spin}
+            className="btn-primary mt-5 flex w-full items-center justify-center gap-2 px-6 py-3 text-xs"
+          >
+            <IconSpin size={14} />
+            Girar (aleatorio)
           </button>
         </HoloPanel>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
           <HoloPanel title="Código + marcador">
             <CodeTiles code="SWR23" />
             <div className="mt-4">
@@ -88,10 +93,14 @@ export default function DevPreview() {
           {card && <Carton card={card} marked={marked} nick="Skywalker77" />}
         </div>
 
-        <HoloPanel title="Pregunta — modos">
-          <div className="mb-3 flex gap-2">
+        <HoloPanel title="Pregunta · modos">
+          <div className="mb-3 flex gap-1.5">
             {(["foto", "silueta", "reveal"] as const).map((m) => (
-              <button key={m} onClick={() => setMode(m)} className="btn-ghost px-3 py-1 text-[10px]">
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={m === mode ? "btn-primary px-3 py-1 text-[10px]" : "btn-ghost px-3 py-1 text-[10px]"}
+              >
                 {m}
               </button>
             ))}

@@ -1,18 +1,20 @@
 import type { ReactNode } from "react";
 
-/** Holographic framed panel with HUD corner brackets. */
+/** Panel plano con hairline y título técnico. `accent` activa el filo cian. */
 export default function HoloPanel({
   title,
   children,
   className = "",
+  accent = false,
 }: {
   title?: string;
   children: ReactNode;
   className?: string;
+  accent?: boolean;
 }) {
   return (
-    <section className={`holo-panel holo-corners p-5 sm:p-6 ${className}`}>
-      {title ? <h2 className="holo-title mb-4">{title}</h2> : null}
+    <section className={`panel ${accent ? "panel-accent" : ""} p-5 sm:p-6 ${className}`}>
+      {title ? <h2 className="panel-title mb-4">{title}</h2> : null}
       {children}
     </section>
   );

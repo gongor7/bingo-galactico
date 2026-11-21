@@ -2,11 +2,30 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SEGMENTS } from "@/game/wheel";
-import { CATEGORY_LABEL, type PublicQuestion } from "@/game/types";
-import type { RevealWinner } from "@/game/types";
+import { CATEGORY_LABEL, ROUND_MS, type PublicQuestion, type RevealWinner } from "@/game/types";
+import {
+  IconClone,
+  IconComodin,
+  IconDroid,
+  IconJedi,
+  IconPlanet,
+  IconSilueta,
+  IconSith,
+  IconTrophy,
+} from "./Icons";
 
-function TimerRing({ endsAt }: { endsAt: number }) {
-  // null hasta montar: Date.now() en el prerender no coincide con el cliente.
+const ICONS: Record<string, (p: { size?: number }) => React.ReactElement> = {
+  jedi: IconJedi,
+  sith: IconSith,
+  clones: IconClone,
+  droides: IconDroid,
+  planetas: IconPlanet,
+  silueta: IconSilueta,
+  comodin: IconComodin,
+};
+
+/** Barra de tiempo (carga del superláser): fina, cian → rojo en los últimos 8s. */
+function TimerBar({ endsAt }: { endsAt: number }) {
   const [left, setLeft] = useState<number | null>(null);
   const raf = useRef(0);
   useEffect(() => {
@@ -18,29 +37,24 @@ function TimerRing({ endsAt }: { endsAt: number }) {
     return () => cancelAnimationFrame(raf.current);
   }, [endsAt]);
 
+  const frac = left === null ? 1 : Math.min(1, left / ROUND_MS);
   const secs = left === null ? null : Math.ceil(left / 1000);
-  const frac = left === null ? 1 : Math.min(1, left / 1000 / 35);
-  const C = 2 * Math.PI * 26;
   const danger = secs !== null && secs <= 8;
   return (
-    <div className="relative h-16 w-16 shrink-0">
-      <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
-        <circle cx="32" cy="32" r="26" fill="rgba(0,0,0,.5)" stroke="rgba(102,217,255,.25)" strokeWidth="4" />
-        <circle
-          cx="32"
-          cy="32"
-          r="26"
-          fill="none"
-          stroke={danger ? "#ff4b3e" : "#ffe81f"}
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={C}
-          strokeDashoffset={C * (1 - frac)}
-          style={{ filter: `drop-shadow(0 0 6px ${danger ? "#ff4b3e" : "#ffe81f"}88)` }}
+    <div className="flex items-center gap-3 sm:w-64">
+      <div className="h-[3px] flex-1 bg-surface2">
+        <div
+          className="h-full transition-[width] duration-100"
+          style={{
+            width: `${frac * 100}%`,
+            background: danger ? "#e85555" : "#58e6ff",
+            boxShadow: danger ? "0 0 8px rgba(232,85,85,.7)" : "0 0 8px rgba(88,230,255,.5)",
+          }}
         />
-      </svg>
+      </div>
       <span
-        className={`absolute inset-0 flex items-center justify-center font-display text-lg font-bold ${danger ? "text-sith" : "text-swyellow"}`}
+        className={`w-7 text-right font-display text-sm font-bold leading-none ${danger ? "text-sith" : "text-cyan"}`}
+        style={{ fontVariantNumeric: "tabular-nums" }}
       >
         {secs ?? "··"}
       </span>
@@ -68,58 +82,59 @@ export default function QuestionPanel({
 }) {
   if (!q && !reveal) {
     return (
-      <div className="holo-panel holo-corners flex min-h-[280px] flex-col items-center justify-center gap-3 p-6 text-center">
-        <span className="anim-float text-4xl">🛰️</span>
-        <p className="font-display text-xs tracking-[0.3em] text-dim">ESPERANDO SEÑAL...</p>
+      <div className="panel flex min-h-[280px] flex-col items-center justify-center gap-3 p-6 text-center">
+        <span className="anim-float text-ink-faint">
+          <IconComodin size={30} />
+        </span>
+        <p className="font-display text-[10px] tracking-[0.4em] text-ink-faint">ESPERANDO SEÑAL</p>
       </div>
     );
   }
 
   const segment = q ? SEGMENTS.find((s) => s.id === q.segment) : null;
+  const Icon = segment ? ICONS[segment.id] : null;
 
   return (
-    <div className="holo-panel holo-corners relative overflow-hidden p-4 sm:p-5">
+    <div className="panel p-4 sm:p-5">
       {q ? (
         <>
-          <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span
-                className="border px-2 py-0.5 font-display text-[10px] font-bold tracking-[0.2em]"
-                style={{ color: segment?.color, borderColor: `${segment?.color}66`, background: `${segment?.color}14` }}
-              >
-                {segment?.icon} {segment?.label}
+              <span className="chip" style={{ color: segment?.color }}>
+                {Icon ? <Icon size={13} /> : null}
+                {segment?.label}
               </span>
               {q.mode === "silueta" && (
-                <span className="border border-swyellow/50 bg-swyellow/10 px-2 py-0.5 font-display text-[10px] font-bold tracking-[0.2em] text-swyellow">
-                  SILUETA · ×2 PTS
+                <span className="chip" style={{ color: "#ffe81f", borderColor: "rgba(255,232,31,.35)" }}>
+                  <IconSilueta size={13} /> SILUETA ×2
                 </span>
               )}
-              <span className="px-1 font-display text-[10px] tracking-[0.2em] text-dim">
-                RONDA {q.roundNo} · {CATEGORY_LABEL[q.category]}
+              <span className="font-display text-[10px] tracking-[0.28em] text-ink-faint">
+                R{String(q.roundNo).padStart(2, "0")} · {CATEGORY_LABEL[q.category]}
               </span>
             </div>
-            {reveal ? null : <TimerRing endsAt={q.endsAt} />}
+            {reveal ? null : <TimerBar endsAt={q.endsAt} />}
           </div>
 
-          <div className={`flex flex-col items-center gap-4 ${big ? "sm:flex-row sm:items-start" : ""}`}>
+          <div className={`flex flex-col items-start gap-5 ${big ? "sm:flex-row sm:items-center" : ""}`}>
             {reveal ? (
               <div
                 key={reveal.answerKey}
-                className="anim-pop relative flex aspect-square w-full max-w-[240px] items-center justify-center overflow-hidden border border-swyellow/50 bg-black/60"
-                style={{ boxShadow: "0 0 34px rgba(255,232,31,.25)" }}
+                className="anim-pop frame-target relative aspect-square w-full max-w-[230px] shrink-0 overflow-hidden border border-line-strong bg-surface2"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={q.image} alt="Respuesta revelada" className="h-full w-full object-cover" />
-                <span className="absolute bottom-0 w-full bg-black/70 py-1 text-center font-display text-[11px] tracking-[0.25em] text-swyellow">
-                  {reveal.answerDisplay}
-                </span>
+                <div className="absolute inset-x-0 bottom-0 bg-void/85 px-2 py-1.5 text-center">
+                  <span className="font-display text-sm font-bold tracking-wide" style={{ color: "#ffe81f" }}>
+                    {reveal.answerDisplay}
+                  </span>
+                </div>
               </div>
             ) : (
               <div
-                className={`relative flex aspect-square w-full max-w-[240px] items-center justify-center overflow-hidden border border-holo/40 bg-black/70 ${
+                className={`frame-target relative aspect-square w-full max-w-[230px] shrink-0 overflow-hidden border border-line bg-surface2 ${
                   q.mode === "silueta" ? "silueta-wrap" : ""
                 }`}
-                style={{ boxShadow: q.mode === "silueta" ? "0 0 26px rgba(102,217,255,.25)" : "0 0 26px rgba(77,180,255,.2)" }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -128,41 +143,39 @@ export default function QuestionPanel({
                   className="h-full w-full object-cover"
                   draggable={false}
                 />
-                {q.mode === "silueta" && (
-                  <span className="absolute right-1 top-1 font-display text-[9px] tracking-[0.3em] text-holo/70">
-                    IDENTIFICA
-                  </span>
-                )}
               </div>
             )}
 
-            <div className="flex w-full flex-1 flex-col gap-3">
-              <p className={`font-body font-semibold leading-snug text-starlight ${big ? "text-lg sm:text-xl" : "text-base"}`}>
+            <div className="flex w-full min-w-0 flex-1 flex-col gap-3">
+              <p className={`font-body font-semibold leading-snug text-ink ${big ? "text-lg sm:text-xl" : "text-base"}`}>
                 {q.prompt}
               </p>
 
               {reveal ? (
-                <div className="anim-banner">
+                <div className="anim-banner border-l-2 border-cyan pl-4">
                   {reveal.winner ? (
-                    <p className="title-sw text-xl sm:text-2xl">¡{reveal.winner.nick} gana +{reveal.points}!</p>
+                    <p className="flex items-center gap-2 font-display text-lg font-bold tracking-wide text-ink sm:text-xl">
+                      <IconTrophy size={20} style={{ color: "#58e6ff" }} />
+                      {reveal.winner.nick} +{reveal.points}
+                    </p>
                   ) : (
-                    <p className="font-display text-lg tracking-[0.2em] text-dim">SIN GANADOR · SE ACABÓ EL TIEMPO</p>
+                    <p className="font-display text-sm tracking-[0.2em] text-ink-dim">SIN GANADOR · TIEMPO AGOTADO</p>
                   )}
-                  <p className="mt-1 text-xs text-dim">
-                    Todos los que tengan <span className="text-swyellow">{reveal.answerDisplay}</span> en su cartón lo marcan.
+                  <p className="mt-1 text-xs text-ink-dim">
+                    Marcan la casilla todos los que tengan <span className="text-ink">{reveal.answerDisplay}</span>.
                   </p>
                 </div>
               ) : (
-                <p className="font-display text-[11px] tracking-[0.25em] text-holo/80">
-                  EL PRIMERO EN ACERTAR GANA · SILENCIO EN LA FRECUENCIA
+                <p className="font-display text-[10px] tracking-[0.3em] text-ink-faint">
+                  EL PRIMERO EN ACERTAR GANA EL PUNTO
                 </p>
               )}
 
               {buzzes && buzzes.length > 0 && !reveal && (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-0.5">
                   {buzzes.map((n, i) => (
-                    <span key={`${n}-${i}`} className="ticker-row text-xs text-sith/90">
-                      ✗ {n} falló la transmisión
+                    <span key={`${n}-${i}`} className="ticker-row text-xs text-ink-faint">
+                      {n} falló la transmisión
                     </span>
                   ))}
                 </div>

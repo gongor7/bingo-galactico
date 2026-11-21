@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sfx } from "@/lib/sfx";
+import { IconSend } from "./Icons";
 
 /**
- * Terminal-style answer input. Parent controls `enabled`; the input keeps
- * itself rate-limited (0.9s) and plays its own feedback sounds.
+ * Input de respuesta tipo terminal. El padre controla `enabled`;
+ * rate-limit propio de 0.9s y feedback de error integrado.
  */
 export default function AnswerInput({
   enabled,
@@ -32,7 +33,7 @@ export default function AnswerInput({
     if (shakeKey > 0) {
       setShake((s) => s + 1);
       sfx.wrong();
-      setLocked(false); // retry allowed until someone nails it
+      setLocked(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shakeKey]);
@@ -51,15 +52,14 @@ export default function AnswerInput({
   };
 
   return (
-    <div className={`holo-panel holo-corners p-4 ${shake ? "" : ""}`} key-data="">
+    <div className="panel p-4">
       <div className={`flex items-stretch gap-2 ${shake ? "anim-shake" : ""}`} key={shake}>
-        <div className="pointer-events-none flex items-center pl-3 font-display text-xs tracking-[0.3em] text-holo/70">
+        <span className="pointer-events-none flex items-center pl-3 font-display text-xs" style={{ color: "#58e6ff" }}>
           ▸
-        </div>
+        </span>
         <input
           ref={inputRef}
-          className="input-sw bg-transparent px-2 py-3 font-display text-sm tracking-wider"
-          style={{ clipPath: "none" }}
+          className="input-sw border-0 bg-transparent px-1 font-display text-sm tracking-wider focus:border-0"
           placeholder={enabled ? `${label}...` : "ESPERANDO PREGUNTA..."}
           value={text}
           disabled={!enabled}
@@ -71,17 +71,18 @@ export default function AnswerInput({
           onClick={submit}
           onMouseEnter={() => sfx.hover()}
           disabled={!enabled || !text.trim() || locked}
-          className="btn-sw shrink-0 bg-swyellow px-4 text-[11px] text-black sm:px-6"
+          className="btn-primary flex shrink-0 items-center gap-2 px-4 text-[11px]"
         >
-          Transmitir
+          <IconSend size={14} />
+          Enviar
         </button>
       </div>
-      <p className="mt-2 px-1 font-display text-[9px] tracking-[0.25em] text-dim">
+      <p className="mt-2.5 px-1 font-display text-[9px] tracking-[0.28em] text-ink-faint">
         {enabled
           ? locked
-            ? "TRANSMISIÓN ENVIADA..."
-            : "PUEDES REINTENTAR · EL PRIMERO EN ACERTAR GANA"
-          : "EL CANAL SE ABRIRÁ CUANDO CAIGA LA PREGUNTA"}
+            ? "TRANSMISIÓN ENVIADA"
+            : "REINTENTO PERMITIDO · GANA EL PRIMERO EN ACERTAR"
+          : "EL CANAL SE ABRE CUANDO CAIGA LA PREGUNTA"}
       </p>
     </div>
   );

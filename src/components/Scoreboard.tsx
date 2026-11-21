@@ -1,8 +1,7 @@
 "use client";
 
 import type { PlayerPub } from "@/game/types";
-
-const MEDALS = ["🥇", "🥈", "🥉"];
+import { IconTrophy } from "./Icons";
 
 export default function Scoreboard({
   players,
@@ -18,16 +17,15 @@ export default function Scoreboard({
 
   if (compact) {
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {sorted.map((p, i) => (
           <span
             key={p.id}
-            className={`anim-pop flex items-center gap-1.5 border px-2 py-1 font-display text-[10px] tracking-wider ${
-              p.id === highlightId ? "border-swyellow bg-swyellow/15 text-swyellow" : "border-holo/30 bg-black/40 text-starlight/85"
-            }`}
+            className={`chip anim-pop ${p.id === highlightId ? "anim-pulse" : ""}`}
+            style={p.id === highlightId ? { color: "#ffe81f", borderColor: "rgba(255,232,31,.4)" } : undefined}
           >
-            {MEDALS[i] ?? `${i + 1}.`} {p.nick}
-            <b className="text-swyellow">{p.score}</b>
+            {String(i + 1).padStart(2, "0")} {p.nick}
+            <b className="text-cyan">{p.score}</b>
           </span>
         ))}
       </div>
@@ -35,25 +33,30 @@ export default function Scoreboard({
   }
 
   return (
-    <ol className="flex flex-col gap-1.5">
+    <ol className="flex flex-col gap-px bg-line/50">
       {sorted.map((p, i) => (
         <li
           key={p.id}
-          className={`anim-pop relative overflow-hidden border px-3 py-2 ${
-            p.id === highlightId ? "border-swyellow/70" : "border-holo/25"
+          className={`anim-pop relative flex items-center justify-between gap-3 bg-surface px-3 py-2.5 ${
+            p.id === highlightId ? "anim-pulse" : ""
           }`}
         >
-          <div
-            className="absolute inset-y-0 left-0 bg-holo/10 transition-all duration-500"
-            style={{ width: `${Math.max(6, (p.score / Math.max(top, 1)) * 100)}%` }}
-          />
-          <div className="relative flex items-center justify-between gap-2">
-            <span className="flex items-center gap-2 font-display text-xs tracking-wider text-starlight/90">
-              <span className="w-6 text-center">{MEDALS[i] ?? i + 1}</span> {p.nick}
-              {p.id === highlightId && <span className="text-swyellow">◄ ¡GANÓ!</span>}
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="w-6 shrink-0 text-center font-display text-xs text-ink-dim">
+              {String(i + 1).padStart(2, "0")}
             </span>
-            <b className="font-display text-sm text-swyellow">{p.score}</b>
-          </div>
+            <span className="truncate font-display text-xs tracking-wider text-ink">{p.nick}</span>
+            {p.id === highlightId && <IconTrophy size={14} style={{ color: "#58e6ff", flex: "none" }} />}
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="h-[2px] w-10 bg-surface2 sm:w-16">
+              <span
+                className="block h-full"
+                style={{ width: `${Math.max(12, (p.score / Math.max(top, 1)) * 100)}%`, background: "#58e6ff" }}
+              />
+            </span>
+            <b className="w-6 text-right font-display text-sm text-ink">{p.score}</b>
+          </span>
         </li>
       ))}
     </ol>

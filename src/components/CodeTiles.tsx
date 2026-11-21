@@ -1,22 +1,23 @@
 "use client";
 
-/** Room code rendered as cockpit tiles. */
+/** Código de sala como display segmentado (una pieza, divisores hairline). */
 export default function CodeTiles({ code, size = "md" }: { code: string; size?: "md" | "lg" }) {
-  const cls =
-    size === "lg"
-      ? "h-16 w-12 text-3xl sm:h-20 sm:w-16 sm:text-5xl"
-      : "h-10 w-8 text-xl sm:h-12 sm:w-10 sm:text-2xl";
+  const box =
+    size === "lg" ? "h-14 text-2xl sm:h-16 sm:text-4xl" : "h-10 text-lg sm:h-11 sm:text-xl";
+  const cell = size === "lg" ? "w-13 sm:w-15" : "w-9 sm:w-10";
   return (
-    <div className="flex justify-center gap-2" aria-label={`Código de sala ${code}`}>
-      {code.split("").map((ch, i) => (
-        <span
-          key={i}
-          className={`title-sw anim-pop flex items-center justify-center border border-swyellow/40 bg-black/50 ${cls}`}
-          style={{ animationDelay: `${i * 90}ms`, clipPath: "polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)" }}
-        >
-          {ch}
-        </span>
-      ))}
+    <div className="flex justify-center" aria-label={`Código de sala ${code}`}>
+      <div className="panel anim-pop flex items-stretch divide-x divide-line" style={{ borderColor: "rgba(168,196,224,.32)" }}>
+        {code.split("").map((ch, i) => (
+          <span
+            key={i}
+            className={`flex items-center justify-center font-display font-bold tracking-normal text-ink ${box} ${cell}`}
+            style={{ animationDelay: `${i * 70}ms` }}
+          >
+            {ch}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
