@@ -152,7 +152,7 @@ export function useHostGame(code: string, roomId: string | null) {
           scoresRef.current.set(p.id, p.score);
         }
       }
-      if (playersRef.current.length === 0) {
+      if (phaseRef.current === "lobby" || playersRef.current.length === 0) {
         playersRef.current = pubs;
         setPlayers(pubs);
       }
@@ -170,6 +170,7 @@ export function useHostGame(code: string, roomId: string | null) {
     };
 
     const startGame = async () => {
+      if (phaseRef.current === "lobby") await fetchPlayers();
       const rows = playersRef.current;
       if (rows.length === 0) return;
       cardsRef.current = new Map();
@@ -466,6 +467,11 @@ export function useHostGame(code: string, roomId: string | null) {
       .on("presence", { event: "sync" }, () => {
         setPresenceCount(Object.keys(channel.presenceState()).length);
       })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "players", filter: `room_id=eq.${roomId}` },
+        () => void fetchPlayers(),
+      )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") void channel.track({ role: "host", nick: "⌘ HOST" });
       });
