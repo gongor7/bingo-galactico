@@ -75,7 +75,21 @@ export default function Landing() {
       const sb = supabase();
       const { data: room } = await sb.from("rooms").select("id, phase").eq("code", c).maybeSingle();
       if (!room) throw new Error("No existe ninguna sala con ese código");
-      if (room.phase !== "lobby") throw new Error("Esa partida ya empezó. Pide al host una sala nueva");
+      // Si el jugador ya existía en esta sala, reconecta con su mismo nombre y cartón (incluso si ya empezó).
+      const { data: existing } = await sb
+        .from("players")
+        .select("id, nick")
+        .eq("room_id", room.id)
+        .ilike("nick", cleanNick)
+        .maybeSingle();
+      if (existing) {
+        localStorage.setItem(`sw-player:${c}`, JSON.stringify({ pid: existing.id, nick: existing.nick }));
+        router.push(`/play/${c}`);
+        return;
+      }
+      if (room.phase !== "lobby") {
+        throw new Error("Esa partida ya empezó. Si ya estabas jugando, escribe tu mismo nombre para volver");
+      }
       const { data: player, error } = await sb
         .from("players")
         .insert({ room_id: room.id, nick: cleanNick })

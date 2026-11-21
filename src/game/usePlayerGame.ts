@@ -46,6 +46,7 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
   } | null>(null);
   const [turnPid, setTurnPid] = useState<string | null>(null);
   const [turnNick, setTurnNick] = useState<string>("");
+  const [pendingPid, setPendingPid] = useState<string | null>(null);
   const [connection, setConnection] = useState<"connecting" | "online" | "offline">("connecting");
 
   const phaseRef = useRef<PlayerPhase>("lobby");
@@ -109,16 +110,16 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
           score: number;
           card: Card | null;
           marks: number[] | null;
-          rooms: { code: string; phase: string }[] | null;
+          rooms: { code: string; phase: string } | { code: string; phase: string }[] | null;
         };
-        const room = row.rooms?.[0] ?? null;
+        const room = Array.isArray(row.rooms) ? row.rooms[0] ?? null : row.rooms ?? null;
         nickRef.current = row.nick;
         if (row.card) {
           cardRef.current = row.card;
           marksRef.current = new Set(row.marks ?? []);
           setCard(row.card);
           setMarks(new Set(row.marks ?? []));
-          if (room && room.phase !== "lobby") goPhase("ready");
+          if (room && room.phase !== "lobby") goPhase(room.phase === "finished" ? "over" : "ready");
         }
         if (room?.phase === "lobby") goPhase("lobby");
       });
@@ -149,6 +150,7 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
             setReveal(null);
             setTurnPid(null);
             setTurnNick("");
+            setPendingPid(null);
             setScores(ev.players.map((p) => ({ id: p.id, nick: p.nick, score: 0 })));
             goPhase("ready");
             sfx.start();
@@ -157,6 +159,13 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
           case "turn": {
             setTurnPid(ev.pid);
             setTurnNick(ev.nick);
+            break;
+          }
+          case "ready": {
+            setTurnPid(ev.turnPid);
+            setTurnNick(ev.turnNick);
+            setPendingPid(ev.pendingPid);
+            if (phaseRef.current !== "over") goPhase("ready");
             break;
           }
           case "spin": {
@@ -192,6 +201,7 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
               points: ev.points,
             });
             setQuestion((q) => (q ? { ...q, endsAt: Date.now() } : q));
+            setPendingPid(ev.winner?.id ?? null);
             goPhase("reveal");
             // Only the winner earns a mark, and they choose where to place it.
             if (ev.winner && ev.winner.id === pidRef.current) {
@@ -210,8 +220,28 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
           }
           case "gameover": {
             setGameOver({ winner: ev.winner, reason: ev.reason, players: ev.players });
+            setPendingPid(null);
             goPhase("over");
             if (ev.winner?.id !== pidRef.current) sfx.gameover();
+            break;
+          }
+          case "sync": {
+            if (ev.targetPid !== pidRef.current) break;
+            setTurnPid(ev.turnPid);
+            setTurnNick(ev.turnNick);
+            setPendingPid(ev.pendingPid);
+            setScores(ev.scores);
+            setQuestion(ev.question);
+            setReveal(ev.reveal);
+            setGameOver(ev.gameOver);
+            if (ev.pendingPid === pidRef.current && ev.pendingTarget) {
+              pendingMarkRef.current = ev.pendingTarget;
+              setPendingMark(ev.pendingTarget);
+            } else {
+              pendingMarkRef.current = null;
+              setPendingMark(null);
+            }
+            goPhase(ev.phase === "spinning" ? "ready" : ev.phase);
             break;
           }
         }
@@ -223,6 +253,9 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
         if (status === "SUBSCRIBED") {
           setConnection("online");
           void channel.track({ pid: pidRef.current, nick: nickRef.current });
+          if (pidRef.current) {
+            sendPlayer(channel, { t: "sync-request", pid: pidRef.current });
+          }
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           setConnection("offline");
         }
@@ -286,7 +319,7 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
   /** Asks the host to spin the wheel — only valid on the player's turn. */
   const requestSpin = () => {
     if (!channelRef.current || !pidRef.current || !myTurn) return;
-    if (phaseRef.current !== "ready") return;
+    if (phaseRef.current !== "ready" || pendingPid) return;
     sfx.hover();
     sendPlayer(channelRef.current, { t: "spin-request", pid: pidRef.current });
   };
@@ -297,6 +330,7 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
     marks,
     justMarkedCell,
     pendingMark,
+    pendingPid,
     markableCells,
     winLine,
     question,

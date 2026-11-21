@@ -86,7 +86,22 @@ export default function PlayPage() {
       const sb = supabase();
       const { data: room } = await sb.from("rooms").select("id, phase").eq("code", code).maybeSingle();
       if (!room) throw new Error("Sala no encontrada");
-      if (room.phase !== "lobby") throw new Error("La partida ya empezó");
+      // Si el jugador ya existía en esta sala (salió o recargó), reconecta con su mismo nombre y cartón.
+      const { data: existing } = await sb
+        .from("players")
+        .select("id, nick")
+        .eq("room_id", room.id)
+        .ilike("nick", cleanNick)
+        .maybeSingle();
+      if (existing) {
+        localStorage.setItem(`sw-player:${code}`, JSON.stringify({ pid: existing.id, nick: existing.nick }));
+        setSession({ pid: existing.id, nick: existing.nick });
+        sfx.join();
+        return;
+      }
+      if (room.phase !== "lobby") {
+        throw new Error("La partida ya empezó. Si ya estabas jugando, escribe tu mismo nombre para volver");
+      }
       const { data: player, error } = await sb
         .from("players")
         .insert({ room_id: room.id, nick: cleanNick })
@@ -225,14 +240,19 @@ export default function PlayPage() {
                       <p className="font-display text-[10px] font-bold tracking-[0.3em]" style={{ color: "#58e6ff" }}>
                         TU TURNO, {session.nick.toUpperCase()}
                       </p>
-                      <p className="mt-1 text-xs text-ink-dim">Gira la ruleta y decide el destino de la ronda.</p>
+                      <p className="mt-1 text-xs text-ink-dim">
+                        {game.pendingPid
+                          ? "Esperando a que el ganador coloque su marca en el cartón..."
+                          : "Gira la ruleta y decide el destino de la ronda."}
+                      </p>
                     </div>
                     <button
                       onClick={game.requestSpin}
                       onMouseEnter={() => sfx.hover()}
-                      className="btn-primary anim-pulse px-6 py-3 text-xs"
+                      disabled={Boolean(game.pendingPid)}
+                      className={`btn-primary px-6 py-3 text-xs ${game.pendingPid ? "" : "anim-pulse"}`}
                     >
-                      Girar ruleta
+                      {game.pendingPid ? "Esperando marca..." : "Girar ruleta"}
                     </button>
                   </>
                 ) : (

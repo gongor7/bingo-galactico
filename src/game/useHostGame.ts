@@ -96,6 +96,8 @@ export function useHostGame(code: string, roomId: string | null) {
   const rotationRef = useRef(0);
   const currentQRef = useRef<PublicQuestion | null>(null);
   const currentAnswerRef = useRef<ActiveAnswer | null>(null);
+  const revealRef = useRef<{ winner: RevealWinner | null; answerDisplay: string; answerKey: string; points: number } | null>(null);
+  const gameOverRef = useRef<GameOverState | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const goPhase = (p: HostPhase) => {
@@ -112,6 +114,13 @@ export function useHostGame(code: string, roomId: string | null) {
 
   const emit = (ev: HostEvent) => {
     if (channelRef.current) sendHost(channelRef.current, ev);
+  };
+
+  const currentTurn = (): { pid: string | null; nick: string } => {
+    const order = turnOrderRef.current;
+    if (order.length === 0) return { pid: null, nick: "" };
+    const pid = order[turnIdxRef.current % order.length] ?? null;
+    return { pid, nick: pid ? nicksRef.current.get(pid) ?? "?" : "" };
   };
 
   const advanceTurn = () => {
@@ -184,8 +193,10 @@ export function useHostGame(code: string, roomId: string | null) {
       setRoundNo(0);
       setQuestion(null);
       setReveal(null);
+      revealRef.current = null;
       setBuzzes([]);
       setGameOver(null);
+      gameOverRef.current = null;
       const withCards = rows.map((p) => ({ id: p.id, nick: p.nick, card: generateCard() }));
       for (const p of withCards) {
         cardsRef.current.set(p.id, p.card);
@@ -286,6 +297,7 @@ export function useHostGame(code: string, roomId: string | null) {
 
       currentQRef.current = pub;
       currentAnswerRef.current = answer;
+      revealRef.current = null;
       setQuestion(pub);
       setReveal(null);
       setBuzzes([]);
@@ -343,7 +355,9 @@ export function useHostGame(code: string, roomId: string | null) {
       const pubs = playersPub();
       playersRef.current = pubs;
       setPlayers(pubs);
-      setReveal({ winner, answerDisplay: ans.display, answerKey: ans.key, points: pub.points });
+      const nextReveal = { winner, answerDisplay: ans.display, answerKey: ans.key, points: pub.points };
+      revealRef.current = nextReveal;
+      setReveal(nextReveal);
       goPhase("reveal");
       emit({
         t: "reveal",
@@ -367,7 +381,16 @@ export function useHostGame(code: string, roomId: string | null) {
       // Next player's turn (the mark gate pauses spinning until it's placed).
       advanceTurn();
       setTimeout(() => {
-        if (phaseRef.current === "reveal") goPhase("ready");
+        if (phaseRef.current === "reveal") {
+          goPhase("ready");
+          const turn = currentTurn();
+          emit({
+            t: "ready",
+            turnPid: turn.pid,
+            turnNick: turn.nick,
+            pendingPid: pendingMarkRef.current?.pid ?? null,
+          });
+        }
       }, REVEAL_BREAK_MS);
     };
 
@@ -379,6 +402,7 @@ export function useHostGame(code: string, roomId: string | null) {
         reason: "host",
         players: sorted,
       };
+      gameOverRef.current = state;
       setGameOver(state);
       goPhase("over");
       emit({ t: "gameover", ...state });
@@ -403,11 +427,15 @@ export function useHostGame(code: string, roomId: string | null) {
           reason: "bingo",
           players: [...pubs].sort((a, b) => b.score - a.score),
         };
+        gameOverRef.current = state;
         setGameOver(state);
         goPhase("over");
         emit({ t: "gameover", ...state });
         sfx.bingo();
         void sb.from("rooms").update({ phase: "finished" }).eq("id", roomIdRef.current ?? "");
+      } else if (phaseRef.current === "ready") {
+        const turn = currentTurn();
+        emit({ t: "ready", turnPid: turn.pid, turnNick: turn.nick, pendingPid: null });
       }
       void persist();
       return true;
@@ -443,11 +471,30 @@ export function useHostGame(code: string, roomId: string | null) {
         reason: "bingo",
         players: [...pubs].sort((a, b) => b.score - a.score),
       };
+      gameOverRef.current = state;
       setGameOver(state);
       goPhase("over");
       emit({ t: "gameover", ...state });
       sfx.bingo();
       void supabase().from("rooms").update({ phase: "finished" }).eq("id", roomId);
+    };
+
+    const onSyncRequest = (ev: Extract<PlayerEvent, { t: "sync-request" }>) => {
+      const turn = currentTurn();
+      const pending = pendingMarkRef.current;
+      emit({
+        t: "sync",
+        targetPid: ev.pid,
+        phase: phaseRef.current,
+        turnPid: turn.pid,
+        turnNick: turn.nick,
+        pendingPid: pending?.pid ?? null,
+        pendingTarget: pending && pending.pid === ev.pid ? pending.target : null,
+        question: currentQRef.current,
+        reveal: revealRef.current,
+        scores: playersPub(),
+        gameOver: gameOverRef.current,
+      });
     };
 
     const channel = roomChannel(sb, code, "host");
@@ -458,6 +505,7 @@ export function useHostGame(code: string, roomId: string | null) {
         else if (ev.t === "spin-request") onSpinRequest(ev);
         else if (ev.t === "mark") applyMark(ev.pid, ev.cell);
         else if (ev.t === "bingo") onBingo(ev);
+        else if (ev.t === "sync-request") onSyncRequest(ev);
       })
       .on("presence", { event: "join" }, () => {
         sfx.join();

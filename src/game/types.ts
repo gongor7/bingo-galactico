@@ -72,6 +72,7 @@ export interface RevealWinner {
 export type HostEvent =
   | { t: "start"; players: { id: string; nick: string; card: Card }[] }
   | { t: "turn"; pid: string; nick: string }
+  | { t: "ready"; turnPid: string | null; turnNick: string; pendingPid: string | null }
   | { t: "spin"; roundNo: number; segment: SegmentId; rotation: number; durMs: number }
   | { t: "question"; q: PublicQuestion }
   | { t: "wrong"; nick: string }
@@ -89,14 +90,28 @@ export type HostEvent =
       markTarget: MarkTarget;
     }
   | { t: "scores"; players: PlayerPub[] }
-  | { t: "gameover"; winner: RevealWinner | null; reason: "bingo" | "host"; players: PlayerPub[] };
+  | { t: "gameover"; winner: RevealWinner | null; reason: "bingo" | "host"; players: PlayerPub[] }
+  | {
+      t: "sync";
+      targetPid: string;
+      phase: "lobby" | "ready" | "spinning" | "asking" | "reveal" | "over";
+      turnPid: string | null;
+      turnNick: string;
+      pendingPid: string | null;
+      pendingTarget: MarkTarget | null;
+      question: PublicQuestion | null;
+      reveal: { winner: RevealWinner | null; answerDisplay: string; answerKey: string; points: number } | null;
+      scores: PlayerPub[];
+      gameOver: { winner: RevealWinner | null; reason: "bingo" | "host"; players: PlayerPub[] } | null;
+    };
 
 /** Players -> host. */
 export type PlayerEvent =
   | { t: "answer"; pid: string; nick: string; roundNo: number; text: string; ts: number }
   | { t: "spin-request"; pid: string }
   | { t: "mark"; pid: string; cell: number }
-  | { t: "bingo"; pid: string; nick: string };
+  | { t: "bingo"; pid: string; nick: string }
+  | { t: "sync-request"; pid: string };
 
 export const ROUND_MS = 35_000;
 export const SPIN_MS = 4_200;
