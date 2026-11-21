@@ -1,0 +1,314 @@
+{
+  "luke": {
+    "ok": true,
+    "page": "Luke_Skywalker",
+    "bytes": 369352,
+    "type": "image/webp"
+  },
+  "obiwan": {
+    "ok": true,
+    "page": "Obi-Wan_Kenobi",
+    "bytes": 77494,
+    "type": "image/webp"
+  },
+  "yoda": {
+    "ok": true,
+    "page": "Yoda",
+    "bytes": 326742,
+    "type": "image/webp"
+  },
+  "mace": {
+    "ok": true,
+    "page": "Mace_Windu",
+    "bytes": 121808,
+    "type": "image/webp"
+  },
+  "quigon": {
+    "ok": true,
+    "page": "Qui-Gon_Jinn",
+    "bytes": 236360,
+    "type": "image/webp"
+  },
+  "ahsoka": {
+    "ok": true,
+    "page": "Ahsoka_Tano",
+    "bytes": 162504,
+    "type": "image/webp"
+  },
+  "rey": {
+    "ok": true,
+    "page": "Rey_Skywalker",
+    "bytes": 136960,
+    "type": "image/webp"
+  },
+  "kiadi": {
+    "ok": true,
+    "page": "Ki-Adi-Mundi",
+    "bytes": 46316,
+    "type": "image/webp"
+  },
+  "plo": {
+    "ok": true,
+    "page": "Plo_Koon",
+    "bytes": 67206,
+    "type": "image/webp"
+  },
+  "anakin": {
+    "ok": true,
+    "page": "Anakin_Skywalker",
+    "bytes": 271126,
+    "type": "image/webp"
+  },
+  "vader": {
+    "ok": true,
+    "page": "Anakin_Skywalker",
+    "bytes": 271126,
+    "type": "image/webp"
+  },
+  "palpatine": {
+    "ok": true,
+    "page": "Darth_Sidious",
+    "bytes": 286262,
+    "type": "image/webp"
+  },
+  "maul": {
+    "ok": true,
+    "page": "Maul",
+    "bytes": 154226,
+    "type": "image/webp"
+  },
+  "dooku": {
+    "ok": true,
+    "page": "Dooku",
+    "bytes": 279290,
+    "type": "image/webp"
+  },
+  "kylo": {
+    "ok": true,
+    "page": "Ben_Solo",
+    "bytes": 357524,
+    "type": "image/webp"
+  },
+  "ventress": {
+    "ok": true,
+    "page": "Asajj_Ventress",
+    "bytes": 107328,
+    "type": "image/webp"
+  },
+  "grievous": {
+    "ok": true,
+    "page": "Grievous",
+    "bytes": 401410,
+    "type": "image/webp"
+  },
+  "snoke": {
+    "ok": true,
+    "page": "Snoke",
+    "bytes": 344900,
+    "type": "image/webp"
+  },
+  "graninquisidor": {
+    "ok": true,
+    "page": "The_Grand_Inquisitor",
+    "bytes": 25862,
+    "type": "image/webp"
+  },
+  "savage": {
+    "ok": true,
+    "page": "Savage_Opress",
+    "bytes": 220818,
+    "type": "image/webp"
+  },
+  "rex": {
+    "ok": true,
+    "page": "Rex",
+    "bytes": 118322,
+    "type": "image/webp"
+  },
+  "cody": {
+    "ok": true,
+    "page": "Cody",
+    "bytes": 38762,
+    "type": "image/webp"
+  },
+  "fives": {
+    "ok": true,
+    "page": "Fives",
+    "bytes": 59950,
+    "type": "image/webp"
+  },
+  "echo": {
+    "ok": true,
+    "page": "Echo",
+    "bytes": 119236,
+    "type": "image/webp"
+  },
+  "hunter": {
+    "ok": true,
+    "page": "Hunter",
+    "bytes": 142564,
+    "type": "image/webp"
+  },
+  "wolffe": {
+    "ok": true,
+    "page": "Wolffe",
+    "bytes": 131600,
+    "type": "image/webp"
+  },
+  "jesse": {
+    "ok": true,
+    "page": "Jesse",
+    "bytes": 55702,
+    "type": "image/webp"
+  },
+  "crosshair": {
+    "ok": true,
+    "page": "Crosshair",
+    "bytes": 60180,
+    "type": "image/webp"
+  },
+  "boba": {
+    "ok": true,
+    "page": "Boba_Fett",
+    "bytes": 132898,
+    "type": "image/webp"
+  },
+  "jango": {
+    "ok": true,
+    "page": "Jango_Fett",
+    "bytes": 137452,
+    "type": "image/webp"
+  },
+  "r2d2": {
+    "ok": true,
+    "page": "R2-D2",
+    "bytes": 213856,
+    "type": "image/webp"
+  },
+  "c3po": {
+    "ok": true,
+    "page": "C-3PO",
+    "bytes": 222890,
+    "type": "image/webp"
+  },
+  "bb8": {
+    "ok": true,
+    "page": "BB-8",
+    "bytes": 197378,
+    "type": "image/webp"
+  },
+  "k2so": {
+    "ok": true,
+    "page": "K-2SO",
+    "bytes": 191336,
+    "type": "image/webp"
+  },
+  "ig11": {
+    "ok": true,
+    "page": "IG-11",
+    "bytes": 36762,
+    "type": "image/webp"
+  },
+  "droideka": {
+    "ok": true,
+    "page": "Droideka",
+    "bytes": 137484,
+    "type": "image/webp"
+  },
+  "chopper": {
+    "ok": true,
+    "page": "C1-10P",
+    "bytes": 227736,
+    "type": "image/webp"
+  },
+  "l3": {
+    "ok": true,
+    "page": "L3-37",
+    "bytes": 239336,
+    "type": "image/webp"
+  },
+  "d0": {
+    "ok": true,
+    "page": "D-O",
+    "bytes": 218778,
+    "type": "image/webp"
+  },
+  "r5d4": {
+    "ok": true,
+    "page": "R5-D4",
+    "bytes": 163568,
+    "type": "image/webp"
+  },
+  "tatooine": {
+    "ok": true,
+    "page": "Tatooine",
+    "bytes": 128952,
+    "type": "image/webp"
+  },
+  "hoth": {
+    "ok": true,
+    "page": "Hoth",
+    "bytes": 80136,
+    "type": "image/webp"
+  },
+  "naboo": {
+    "ok": true,
+    "page": "Naboo",
+    "bytes": 114698,
+    "type": "image/webp"
+  },
+  "coruscant": {
+    "ok": true,
+    "page": "Coruscant",
+    "bytes": 290010,
+    "type": "image/webp"
+  },
+  "mustafar": {
+    "ok": true,
+    "page": "Mustafar",
+    "bytes": 208636,
+    "type": "image/webp"
+  },
+  "kamino": {
+    "ok": true,
+    "page": "Kamino",
+    "bytes": 38392,
+    "type": "image/webp"
+  },
+  "endor": {
+    "ok": true,
+    "page": "Endor",
+    "bytes": 130662,
+    "type": "image/webp"
+  },
+  "dagobah": {
+    "ok": true,
+    "page": "Dagobah",
+    "bytes": 266370,
+    "type": "image/webp"
+  },
+  "geonosis": {
+    "ok": true,
+    "page": "Geonosis",
+    "bytes": 70762,
+    "type": "image/webp"
+  },
+  "kashyyyk": {
+    "ok": true,
+    "page": "Kashyyyk",
+    "bytes": 152578,
+    "type": "image/webp"
+  },
+  "mandalore": {
+    "ok": true,
+    "page": "Mandalore",
+    "bytes": 93058,
+    "type": "image/webp"
+  },
+  "exegol": {
+    "ok": true,
+    "page": "Exegol",
+    "bytes": 24648,
+    "type": "image/webp"
+  }
+}
