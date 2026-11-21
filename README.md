@@ -6,18 +6,20 @@ perspectiva (crawl), paneles holográficos con scanlines CRT, ruleta con aguja d
 láser y cartones que se marcan con retícula de tiro. Todo el audio es sintetizado
 (WebAudio), sin material con copyright.
 
-- **Host** crea la sala → los jugadores se unen con un **código**.
-- Al iniciar, cada jugador recibe un **cartón 5×5** con las 5 categorías
-  (`JEDI · SITH · CLONES · DROIDES · PLANETAS`) en columnas de **orden aleatorio**
-  (cartón único por jugador) + estrella libre central.
-- Por turnos se gira la **ruleta** de categorías: Jedis, Siths, Clones, Droides,
-  Planetas, **Silueta** (×2 puntos, el personaje aparece en negro) y **Comodín** (cualquier categoría).
+- **Host** crea la sala → los jugadores se unen con un **código**, escaneando el **QR** o abriendo el **enlace** (`?room=CODIGO` precarga el código).
+- Al iniciar, cada jugador recibe un **cartón 5×5 disperso**: las 25 casillas llevan
+  una categoría al azar (5 de cada una) + estrella libre central — cartón 100% único por jugador.
+- La **ruleta gira por turnos**: cada ronda le toca girar a un jugador distinto
+  (el host puede girar por cualquiera como respaldo).
 - La pregunta (foto, silueta o planeta) llega a **todos a la vez**: se abre un campo de
   respuesta con reintento hasta que alguien acierte. **El primero en acertar gana el punto**
-  (1 o 2 en silueta) y **elige dónde marcar** una casilla de esa categoría en su cartón
-  (si la columna está llena, en cualquier casilla vacía).
+  (1 o 2 en silueta) y está **obligado a marcar su cartón**: toca una casilla de esa
+  categoría donde quiera (si la categoría está agotada, en cualquier casilla vacía).
+  Nadie vuelve a girar hasta que coloque su marca.
 - Si el tiempo se agota sin ganador, se revela la respuesta y **nadie marca** esa ronda.
 - La primera **línea completa** (fila, columna o diagonal) grita **¡BINGO!** y gana la partida.
+- **Música**: la intro suena con una fanfarria original sintetizada; si quieres el tema
+  real, coloca tu propio archivo como `public/intro-theme.mp3` (no incluido por copyright).
 
 ## Stack
 

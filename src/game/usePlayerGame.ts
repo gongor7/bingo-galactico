@@ -13,7 +13,7 @@ import { roomChannel, sendPlayer } from "@/lib/realtime";
 import { sfx } from "@/lib/sfx";
 import { hyperspace } from "@/components/StarField";
 import type { Card, Category, HostEvent, PlayerPub, PublicQuestion } from "./types";
-import { canPlaceMark, completedLine, categoryColumnIndexes } from "./cards";
+import { canPlaceMark, completedLine } from "./cards";
 import { SPIN_MS } from "./types";
 
 export type PlayerPhase = "lobby" | "ready" | "spinning" | "asking" | "reveal" | "over";
@@ -44,6 +44,8 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
     reason: "bingo" | "host";
     players: PlayerPub[];
   } | null>(null);
+  const [turnPid, setTurnPid] = useState<string | null>(null);
+  const [turnNick, setTurnNick] = useState<string>("");
   const [connection, setConnection] = useState<"connecting" | "online" | "offline">("connecting");
 
   const phaseRef = useRef<PlayerPhase>("lobby");
@@ -145,9 +147,16 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
             setGameOver(null);
             setQuestion(null);
             setReveal(null);
+            setTurnPid(null);
+            setTurnNick("");
             setScores(ev.players.map((p) => ({ id: p.id, nick: p.nick, score: 0 })));
             goPhase("ready");
             sfx.start();
+            break;
+          }
+          case "turn": {
+            setTurnPid(ev.pid);
+            setTurnNick(ev.nick);
             break;
           }
           case "spin": {
@@ -253,16 +262,26 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
     const cat = pendingMarkRef.current;
     const out = new Set<number>();
     if (!c || !cat) return out;
-    const col = categoryColumnIndexes(c, cat).filter((i) => !marksRef.current.has(i));
-    if (col.length > 0) {
-      col.forEach((i) => out.add(i));
-    } else {
-      // column full: the mark may go anywhere empty
-      for (let i = 0; i < c.length; i++) {
-        if (c[i] !== null && !marksRef.current.has(i)) out.add(i);
-      }
+    const matches: number[] = [];
+    const others: number[] = [];
+    for (let i = 0; i < c.length; i++) {
+      if (c[i] === null || marksRef.current.has(i)) continue;
+      if (c[i] === cat) matches.push(i);
+      else others.push(i);
     }
+    if (matches.length > 0) matches.forEach((i) => out.add(i));
+    else others.forEach((i) => out.add(i)); // category exhausted: anywhere free
     return out;
+  };
+
+  const myTurn = Boolean(turnPid && pid && turnPid === pid);
+
+  /** Asks the host to spin the wheel — only valid on the player's turn. */
+  const requestSpin = () => {
+    if (!channelRef.current || !pidRef.current || !myTurn) return;
+    if (phaseRef.current !== "ready") return;
+    sfx.hover();
+    sendPlayer(channelRef.current, { t: "spin-request", pid: pidRef.current });
   };
 
   return {
@@ -281,8 +300,12 @@ export function usePlayerGame(code: string, pid: string | null, nick: string | n
     spinning,
     shakeKey,
     gameOver,
+    turnPid,
+    turnNick,
+    myTurn,
     connection,
     sendAnswer,
     placeMark,
+    requestSpin,
   };
 }

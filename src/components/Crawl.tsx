@@ -1,15 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sfx } from "@/lib/sfx";
 
 /** Iconic opening crawl. Shown full-screen; call onFinish to dismiss. */
 export default function Crawl({ onFinish }: { onFinish: () => void }) {
   const [leaving, setLeaving] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Música de intro: si el usuario coloca su propio /intro-theme.mp3 en
+  // public/, suena ese archivo; si no (o si el autoplay está bloqueado),
+  // suena la fanfarria original sintetizada (sfx.fanfare).
+  useEffect(() => {
+    let cancelled = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      const a = new Audio("/intro-theme.mp3");
+      audioRef.current = a;
+      a.volume = 0.8;
+      a.onerror = () => {
+        if (!cancelled) sfx.fanfare();
+      };
+      const playing = a.play();
+      if (playing) {
+        playing
+          .then(() => {
+            if (cancelled) a.pause();
+          })
+          .catch(() => {
+            if (!cancelled) sfx.fanfare();
+          });
+      }
+      // Red de seguridad: si en 1.5 s no empezó el audio, fanfarria.
+      fallbackTimer = setTimeout(() => {
+        if (!cancelled && a.paused) sfx.fanfare();
+      }, 1500);
+    } catch {
+      sfx.fanfare();
+    }
+    return () => {
+      cancelled = true;
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   const finish = () => {
     if (leaving) return;
     setLeaving(true);
+    if (audioRef.current) audioRef.current.pause();
     sfx.gameover();
     setTimeout(onFinish, 650);
   };

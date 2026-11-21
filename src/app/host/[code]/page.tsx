@@ -155,20 +155,40 @@ export default function HostPage() {
           <div className="flex flex-col gap-4">
             <HoloPanel title="Ruleta de destinos">
               <Wheel rotation={game.spin?.rotation ?? 0} spinning={game.phase === "spinning"} />
+              <p className="mt-4 text-center font-display text-[9px] tracking-[0.3em] text-ink-dim">
+                TURNO: <span style={{ color: "#58e6ff" }}>{game.turnNick || "—"}</span>
+              </p>
               <button
                 onClick={game.spinNow}
                 onMouseEnter={() => sfx.hover()}
                 disabled={!game.canSpin}
-                className="btn-primary mt-5 w-full px-6 py-3.5 text-xs"
+                className="btn-primary mt-3 w-full px-6 py-3.5 text-xs"
               >
                 {game.phase === "spinning"
                   ? `${segmentLabel ?? "Girando"}...`
                   : game.phase === "ready"
-                    ? "Girar ruleta"
+                    ? `Girar por ${game.turnNick || "—"}`
                     : game.phase === "asking"
                       ? "Ronda en curso"
                       : "Resultados"}
               </button>
+              {game.pendingPid && (
+                <div className="mt-3 border border-gold/40 bg-gold/5 p-3">
+                  <p className="font-display text-[9px] tracking-[0.24em] text-gold">
+                    MARCA PENDIENTE DE {game.players.find((p) => p.id === game.pendingPid)?.nick.toUpperCase()}
+                  </p>
+                  <p className="mt-1 text-[11px] text-ink-dim">
+                    Nadie puede girar hasta que coloque su marca.
+                  </p>
+                  <button
+                    onClick={() => game.markRandomFor(game.pendingPid!)}
+                    onMouseEnter={() => sfx.hover()}
+                    className="btn-ghost mt-2 w-full px-3 py-2 text-[10px]"
+                  >
+                    Marcar al azar por {game.players.find((p) => p.id === game.pendingPid)?.nick}
+                  </button>
+                </div>
+              )}
             </HoloPanel>
             <HoloPanel title="Marcador">
               <Scoreboard players={game.players} highlightId={game.reveal?.winner?.id ?? null} />

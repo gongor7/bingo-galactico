@@ -41,8 +41,9 @@ export interface PublicQuestion {
 }
 
 /**
- * 25 cells, row-major. Each column is one of the 5 categories in RANDOM order
- * (unique cartón per player); null = free center at index 12.
+ * 25 cells, row-major (v3 "disperso"): every cell carries a random category
+ * (5 per category; one category gets 4 where the free center sits at index 12).
+ * No columns — the winner marks any free cell of the won category.
  */
 export type Card = (Category | null)[];
 
@@ -60,6 +61,7 @@ export interface RevealWinner {
 /** Host -> players. */
 export type HostEvent =
   | { t: "start"; players: { id: string; nick: string; card: Card }[] }
+  | { t: "turn"; pid: string; nick: string }
   | { t: "spin"; roundNo: number; segment: SegmentId; rotation: number; durMs: number }
   | { t: "question"; q: PublicQuestion }
   | { t: "wrong"; nick: string }
@@ -81,6 +83,7 @@ export type HostEvent =
 /** Players -> host. */
 export type PlayerEvent =
   | { t: "answer"; pid: string; nick: string; roundNo: number; text: string; ts: number }
+  | { t: "spin-request"; pid: string }
   | { t: "mark"; pid: string; cell: number }
   | { t: "bingo"; pid: string; nick: string };
 

@@ -1,18 +1,23 @@
 // Cartón generation and line detection.
-// New model: the cartón has only CATEGORIES, one per column, in random order
-// per player. Marks are position-based (cell indexes), placed by the winner.
+// v3 "disperso": every cell has a random category (5 per category, minus the
+// free center). Marks are position-based; the winner places them anywhere the
+// category matches (or anywhere free if that category is exhausted).
 
 import { CATEGORIES, type Card, type Category } from "./types";
 
 export function generateCard(): Card {
-  // Random column order per player; free center at row 2, col 2.
-  const cols = [...CATEGORIES].sort(() => Math.random() - 0.5);
-  const cells: Card = [];
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      cells.push(r === 2 && c === 2 ? null : cols[c]);
-    }
+  // 25 cells: 5 per category; one cell becomes the free center (index 12).
+  const bag: Category[] = [];
+  for (const cat of CATEGORIES) {
+    for (let i = 0; i < 5; i++) bag.push(cat);
   }
+  // shuffle (Fisher-Yates)
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  const cells: Card = [...bag];
+  cells[12] = null; // free center
   return cells;
 }
 
@@ -35,16 +40,9 @@ export function completedLine(card: Card, marked: Set<number>): number[] | null 
   return null;
 }
 
-/** Indexes of the cells belonging to a category column. */
-export function categoryColumnIndexes(card: Card, cat: Category): number[] {
-  const out: number[] = [];
-  for (let i = 0; i < card.length; i++) if (card[i] === cat) out.push(i);
-  return out;
-}
-
-/** True when every markable cell of a category column is already marked. */
-export function columnFull(card: Card, marked: Set<number>, cat: Category): boolean {
-  return categoryColumnIndexes(card, cat).every((i) => marked.has(i));
+/** True when every markable cell of a category is already marked. */
+export function categoryExhausted(card: Card, marked: Set<number>, cat: Category): boolean {
+  return !card.some((c, i) => c === cat && !marked.has(i));
 }
 
 /** May `cell` be used to place a mark won in category `cat`? */
@@ -52,5 +50,5 @@ export function canPlaceMark(card: Card, marked: Set<number>, cat: Category, cel
   if (cell < 0 || cell >= card.length) return false;
   if (card[cell] === null) return false; // free center, not placeable
   if (marked.has(cell)) return false;
-  return card[cell] === cat || columnFull(card, marked, cat);
+  return card[cell] === cat || categoryExhausted(card, marked, cat);
 }

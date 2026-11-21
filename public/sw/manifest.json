@@ -59,6 +59,18 @@
     "bytes": 271126,
     "type": "image/webp"
   },
+  "aayla": {
+    "ok": true,
+    "page": "Aayla_Secura",
+    "bytes": 91418,
+    "type": "image/webp"
+  },
+  "luminara": {
+    "ok": true,
+    "page": "Luminara_Unduli",
+    "bytes": 41830,
+    "type": "image/webp"
+  },
   "vader": {
     "ok": true,
     "page": "Anakin_Skywalker",
@@ -117,6 +129,18 @@
     "ok": true,
     "page": "Savage_Opress",
     "bytes": 220818,
+    "type": "image/webp"
+  },
+  "revan": {
+    "ok": true,
+    "page": "Darth_Revan",
+    "bytes": 80066,
+    "type": "image/webp"
+  },
+  "cadbane": {
+    "ok": true,
+    "page": "Cad_Bane",
+    "bytes": 77980,
     "type": "image/webp"
   },
   "rex": {
@@ -179,6 +203,24 @@
     "bytes": 137452,
     "type": "image/webp"
   },
+  "omega": {
+    "ok": true,
+    "page": "Omega",
+    "bytes": 107168,
+    "type": "image/webp"
+  },
+  "gregor": {
+    "ok": true,
+    "page": "Gregor",
+    "bytes": 62536,
+    "type": "image/webp"
+  },
+  "ninetynine": {
+    "ok": true,
+    "page": "99",
+    "bytes": 75384,
+    "type": "image/webp"
+  },
   "r2d2": {
     "ok": true,
     "page": "R2-D2",
@@ -237,6 +279,18 @@
     "ok": true,
     "page": "R5-D4",
     "bytes": 163568,
+    "type": "image/webp"
+  },
+  "superdroid": {
+    "ok": true,
+    "page": "B2_super_battle_droid",
+    "bytes": 187228,
+    "type": "image/webp"
+  },
+  "gonk": {
+    "ok": true,
+    "page": "GNK_power_droid",
+    "bytes": 149180,
     "type": "image/webp"
   },
   "tatooine": {
@@ -309,6 +363,24 @@
     "ok": true,
     "page": "Exegol",
     "bytes": 24648,
+    "type": "image/webp"
+  },
+  "jakku": {
+    "ok": true,
+    "page": "Jakku",
+    "bytes": 34946,
+    "type": "image/webp"
+  },
+  "bespin": {
+    "ok": true,
+    "page": "Bespin",
+    "bytes": 60962,
+    "type": "image/webp"
+  },
+  "yavin": {
+    "ok": true,
+    "page": "Yavin_4",
+    "bytes": 132892,
     "type": "image/webp"
   }
 }

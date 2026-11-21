@@ -41,6 +41,8 @@ const MANIFEST = {
   kiadi: "Ki-Adi-Mundi",
   plo: "Plo_Koon",
   anakin: "Anakin_Skywalker",
+  aayla: "Aayla_Secura",
+  luminara: "Luminara_Unduli",
   // SITH
   vader: "Anakin_Skywalker",
   palpatine: "Darth_Sidious",
@@ -52,6 +54,8 @@ const MANIFEST = {
   snoke: "Snoke",
   graninquisidor: "The_Grand_Inquisitor",
   savage: "Savage_Opress",
+  revan: "Darth_Revan",
+  cadbane: "Cad_Bane",
   // CLONES
   rex: "Rex",
   cody: "Cody",
@@ -63,6 +67,9 @@ const MANIFEST = {
   crosshair: "Crosshair",
   boba: "Boba_Fett",
   jango: "Jango_Fett",
+  omega: "Omega",
+  gregor: "Gregor",
+  ninetynine: "99",
   // DROIDES
   r2d2: "R2-D2",
   c3po: "C-3PO",
@@ -74,6 +81,8 @@ const MANIFEST = {
   l3: "L3-37",
   d0: "D-O",
   r5d4: "R5-D4",
+  superdroid: "B2_super_battle_droid",
+  gonk: "GNK_power_droid",
   // PLANETAS
   tatooine: "Tatooine",
   hoth: "Hoth",
@@ -87,6 +96,9 @@ const MANIFEST = {
   kashyyyk: "Kashyyyk",
   mandalore: "Mandalore",
   exegol: "Exegol",
+  jakku: "Jakku",
+  bespin: "Bespin",
+  yavin: "Yavin_4",
 };
 
 const OUT = new URL("../public/sw/", import.meta.url);

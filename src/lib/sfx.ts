@@ -111,6 +111,39 @@ export const sfx = {
   gameover: () => {
     [220, 262, 330, 220].forEach((f, i) => tone({ freq: f, dur: 0.3, type: "triangle", vol: 0.11, when: i * 0.28 }));
   },
+  /**
+   * Fanfarria épica ORIGINAL (~12 s) para la intro: acordes de bronces con
+   * timbal. Composición propia — no es el tema de Star Wars (con copyright).
+   */
+  fanfare: () => {
+    const brass = (freqs: number[], when: number, dur: number, vol = 0.05) => {
+      freqs.forEach((f) => {
+        tone({ freq: f, dur, type: "sawtooth", vol, when, slideTo: f * 1.004 });
+        tone({ freq: f * 1.005, dur, type: "sawtooth", vol: vol * 0.7, when });
+      });
+    };
+    const timp = (when: number) => {
+      tone({ freq: 75, dur: 0.5, type: "sine", vol: 0.16, when, slideTo: 48 });
+      noiseBurst(0.22, 120, 60, 0.1, when);
+    };
+    // Intro: tres golpes de timbal
+    timp(0);
+    timp(1.4);
+    timp(2.8);
+    // Progresión épica original: Bb — F — Gm — Eb — Bb — F — Bb
+    brass([116.5, 146.8, 174.6], 3.6, 1.5); // Bb2 D3 F3
+    brass([87.3, 116.5, 174.6], 5.2, 1.5); // F2 Bb2 F3
+    brass([98, 116.5, 155.6], 6.8, 1.5); // G2 Bb2 Eb3
+    brass([77.8, 116.5, 155.6], 8.4, 1.5); // Eb2 Bb2 Eb3
+    brass([116.5, 146.8, 174.6], 10, 1.4); // Bb
+    brass([87.3, 116.5, 174.6], 11.5, 1.3); // F
+    brass([116.5, 146.8, 174.6, 233.1], 12.9, 2.6, 0.06); // Bb final largo
+    timp(13);
+    // Remate agudo original (sin copiar melodías existentes)
+    [466.2, 587.3, 698.5, 932.3].forEach((f, i) =>
+      tone({ freq: f, dur: 0.34, type: "triangle", vol: 0.07, when: 13.4 + i * 0.22 }),
+    );
+  },
 };
 
 export function isMuted(): boolean {

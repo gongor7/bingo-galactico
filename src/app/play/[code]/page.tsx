@@ -212,6 +212,48 @@ export default function PlayPage() {
       {(game.phase === "ready" || game.phase === "asking" || game.phase === "reveal") && (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr),400px]">
           <div className="order-2 flex flex-col gap-4 lg:order-1">
+            {/* Turnos de ruleta */}
+            {game.phase === "ready" && (
+              <div className="panel flex flex-col items-center gap-3 p-5 sm:flex-row sm:justify-between sm:text-left">
+                {game.myTurn ? (
+                  <>
+                    <div>
+                      <p className="font-display text-[10px] font-bold tracking-[0.3em]" style={{ color: "#58e6ff" }}>
+                        TU TURNO, {session.nick.toUpperCase()}
+                      </p>
+                      <p className="mt-1 text-xs text-ink-dim">Gira la ruleta y decide el destino de la ronda.</p>
+                    </div>
+                    <button
+                      onClick={game.requestSpin}
+                      onMouseEnter={() => sfx.hover()}
+                      className="btn-primary anim-pulse px-6 py-3 text-xs"
+                    >
+                      Girar ruleta
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <p className="font-display text-[10px] tracking-[0.3em] text-ink-dim">TURNO DE LA RULETA</p>
+                      <p className="mt-1 text-xs text-ink-dim">
+                        <span className="text-ink">{game.turnNick || "..."}</span> gira esta vez. ¡Prepárate para responder!
+                      </p>
+                    </div>
+                    <span className="anim-float text-ink-faint">
+                      <IconSignal size={22} />
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+            <QuestionPanel q={game.question} reveal={game.reveal} buzzes={game.buzzes} />
+            <AnswerInput
+              enabled={game.phase === "asking" && !game.reveal}
+              onSend={game.sendAnswer}
+              shakeKey={game.shakeKey}
+            />
+          </div>
+          <div className="order-2 flex flex-col gap-4 lg:order-1">
             <QuestionPanel q={game.question} reveal={game.reveal} buzzes={game.buzzes} />
             <AnswerInput
               enabled={game.phase === "asking" && !game.reveal}
@@ -237,6 +279,34 @@ export default function PlayPage() {
                 <Scoreboard players={game.scores} highlightId={game.reveal?.winner?.id ?? null} />
               </HoloPanel>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── MARCA OBLIGATORIA (ganador) ───────────────────────────────── */}
+      {game.pendingMark && game.phase !== "over" && (
+        <div className="fixed inset-0 z-[45] flex items-center justify-center overflow-y-auto bg-void/90 px-4 py-6">
+          <div className="w-full max-w-md">
+            <HoloPanel title="Marca obligatoria" accent className="text-center">
+              <p className="anim-banner title-sw text-2xl">¡Tu punto, tu marca!</p>
+              <p className="mt-2 text-xs leading-relaxed text-ink-dim">
+                Toca una casilla de tu cartón. El juego no sigue hasta que coloques tu marca.
+              </p>
+            </HoloPanel>
+            <div className="mt-4">
+              {game.card && (
+                <Carton
+                  card={game.card}
+                  marks={game.marks}
+                  justMarkedCell={game.justMarkedCell}
+                  pendingCategory={game.pendingMark}
+                  markable={game.markableCells()}
+                  onMark={game.placeMark}
+                  nick={session.nick}
+                  winLine={game.winLine}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
