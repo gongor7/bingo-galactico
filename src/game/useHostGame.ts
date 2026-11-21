@@ -153,17 +153,37 @@ export function useHostGame(code: string, roomId: string | null) {
         nick: p.nick,
         score: p.score,
       }));
+      // CRÍTICO: la BD solo es fuente de verdad durante la RECUPERACIÓN (lobby
+      // o primer arranque). A mitad de partida, el estado en vivo (puntos y
+      // marcas recién aplicados, aún no persistidos) manda: una lectura vieja
+      // de la BD NUNCA debe revertirlos (bug: punto que desaparecía / marca
+      // que se borraba por una carrera persist→postgres_changes→read).
+      const recovering = phaseRef.current === "lobby" || playersRef.current.length === 0;
       for (const p of data as Array<{ id: string; nick: string; score: number; card: Card | null; marks: number[] | null }>) {
         nicksRef.current.set(p.id, p.nick);
-        if (p.card) {
+        if (!p.card) continue;
+        if (recovering) {
           cardsRef.current.set(p.id, p.card);
           marksRef.current.set(p.id, new Set(p.marks ?? []));
           scoresRef.current.set(p.id, p.score);
+        } else if (!cardsRef.current.has(p.id)) {
+          // jugador sin estado en memoria (p. ej. host refrescó): recupéralo
+          cardsRef.current.set(p.id, p.card);
+          marksRef.current.set(p.id, new Set(p.marks ?? []));
+          if (!scoresRef.current.has(p.id)) scoresRef.current.set(p.id, p.score);
         }
       }
-      if (phaseRef.current === "lobby" || playersRef.current.length === 0) {
+      if (recovering) {
         playersRef.current = pubs;
         setPlayers(pubs);
+      } else {
+        // incorpora roster nuevo sin tocar puntos existentes
+        const known = new Set(playersRef.current.map((p) => p.id));
+        const missing = pubs.filter((p) => !known.has(p.id));
+        if (missing.length > 0) {
+          playersRef.current = [...playersRef.current, ...missing];
+          setPlayers(playersRef.current);
+        }
       }
     };
     void fetchPlayers();
